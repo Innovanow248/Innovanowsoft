@@ -1,0 +1,145 @@
+<div class="page-container">
+  <div class="eyebrow">Administración Financiera</div>
+  <h1 class="page-title">Proveedores</h1>
+
+  <div class="card search-card">
+    <form [formGroup]="form" (ngSubmit)="buscar()" class="search-row">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>CUIT, DNI o Razón Social</mat-label>
+        <mat-icon matPrefix>storefront</mat-icon>
+        <input matInput formControlName="busqueda" />
+      </mat-form-field>
+      <button class="btn-action" type="submit" [disabled]="loading()">Buscar</button>
+    </form>
+  </div>
+
+  @if (loading()) {
+    <div style="text-align:center;padding:32px"><mat-spinner diameter="40" /></div>
+  }
+
+  @if (error()) {
+    <div class="amber-banner" style="margin-top:16px">{{ error() }}</div>
+  }
+
+  <!-- Lista de resultados cuando hay múltiples coincidencias -->
+  @if (resultados().length > 1) {
+    <div class="card" style="margin-top:16px;padding:0;overflow:hidden">
+      <div class="card-header">
+        <mat-icon>list</mat-icon>
+        <span>{{ resultados().length }} proveedores encontrados — seleccioná uno</span>
+      </div>
+      <table mat-table [dataSource]="resultados()">
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef>Nombre / Razón social</th>
+          <td mat-cell *matCellDef="let p"><strong>{{ p.apellido }}, {{ p.nombre }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="cuit">
+          <th mat-header-cell *matHeaderCellDef>CUIT</th>
+          <td mat-cell *matCellDef="let p">{{ p.cuitCuil }}</td>
+        </ng-container>
+        <ng-container matColumnDef="tipo">
+          <th mat-header-cell *matHeaderCellDef>Tipo sociedad</th>
+          <td mat-cell *matCellDef="let p">{{ p.tipoSociedad || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="accion">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let p">
+            <button class="btn-inline" (click)="seleccionar(p)">Ver facturas</button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="colsResultados"></tr>
+        <tr mat-row *matRowDef="let row; columns: colsResultados;" style="cursor:pointer" (click)="seleccionar(row)"></tr>
+      </table>
+    </div>
+  }
+
+  @if (proveedor()) {
+    <!-- Encabezado proveedor -->
+    <div class="card prov-header">
+      <div class="prov-avatar">{{ proveedor()!.apellido?.[0] }}</div>
+      <div class="prov-info">
+        <div class="prov-nombre">{{ proveedor()!.apellido }}, {{ proveedor()!.nombre }}</div>
+        <div class="prov-meta">
+          CUIT {{ proveedor()!.cuitCuil }}
+          @if (proveedor()!.nroRegistro) { &nbsp;·&nbsp; Reg. N° {{ proveedor()!.nroRegistro }} }
+          @if (proveedor()!.email) { &nbsp;·&nbsp; {{ proveedor()!.email }} }
+        </div>
+      </div>
+      <div class="prov-kpis">
+        <div class="stat-card" style="min-width:160px">
+          <div class="stat-value" style="color:var(--color-info)">{{ cantFacturas() }}</div>
+          <div class="stat-label">Facturas</div>
+        </div>
+        <div class="stat-card" style="min-width:200px">
+          <div class="stat-value" style="color:var(--color-primary);font-size:24px">{{ totalFacturado() | currency:'ARS':'symbol':'1.0-0' }}</div>
+          <div class="stat-label">Total facturado</div>
+        </div>
+      </div>
+    </div>
+
+    @if (facturas().length) {
+      <div class="card" style="margin-top:16px;padding:0;overflow:hidden">
+        <div class="card-header">
+          <mat-icon>receipt</mat-icon>
+          <span>Facturas de compra</span>
+          <button class="btn-header-sm" (click)="nuevaFactura()">
+            <mat-icon>add</mat-icon> Registrar factura
+          </button>
+        </div>
+        <table mat-table [dataSource]="facturas()">
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let f">{{ f.fecha | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="nroFactura">
+            <th mat-header-cell *matHeaderCellDef>N° Factura</th>
+            <td mat-cell *matCellDef="let f"><strong>{{ f.letraComprobante }}-{{ f.nroFactura }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="tipo">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let f"><mat-chip>{{ f.tipoComprobante }}</mat-chip></td>
+          </ng-container>
+          <ng-container matColumnDef="totalFactura">
+            <th mat-header-cell *matHeaderCellDef>Total</th>
+            <td mat-cell *matCellDef="let f"><strong>{{ f.totalFactura | currency:'ARS':'symbol':'1.2-2' }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="netoGravado">
+            <th mat-header-cell *matHeaderCellDef>Neto gravado</th>
+            <td mat-cell *matCellDef="let f">{{ f.netoGravado | currency:'ARS':'symbol':'1.2-2' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="iva">
+            <th mat-header-cell *matHeaderCellDef>IVA</th>
+            <td mat-cell *matCellDef="let f">{{ f.iva | currency:'ARS':'symbol':'1.2-2' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let f">
+              <span [class]="estadoClass(f.estado)">{{ estadoLabel(f.estado) }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="ordenPago">
+            <th mat-header-cell *matHeaderCellDef>Orden de Pago</th>
+            <td mat-cell *matCellDef="let f">{{ ordenPago(f) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="detalle">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let f">
+              <button class="icon-btn" (click)="verDetalle(f)" matTooltip="Ver detalle">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="cols"></tr>
+          <tr mat-row *matRowDef="let row; columns: cols;"></tr>
+        </table>
+      </div>
+    } @else {
+      <div class="amber-banner" style="margin-top:16px">
+        Sin facturas registradas para este proveedor.
+        <button class="btn-inline" (click)="nuevaFactura()">
+          <mat-icon>add</mat-icon> Registrar primera factura
+        </button>
+      </div>
+    }
+  }
+</div>

@@ -1,0 +1,121 @@
+<div class="page-container">
+  <div class="eyebrow">Administración Tributaria</div>
+  <h1 class="page-title">Deuda Tributaria</h1>
+
+  <div class="card search-card">
+    <form [formGroup]="form" (ngSubmit)="buscar()" class="search-row">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>CUIT, DNI o Apellido</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput formControlName="busqueda" />
+      </mat-form-field>
+      <button class="search-btn" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Consultando…' : 'Consultar' }}
+      </button>
+    </form>
+  </div>
+
+  @if (error()) {
+    <div class="amber-banner" style="margin-top:16px">{{ error() }}</div>
+  }
+
+  <!-- Lista de selección cuando hay múltiples resultados -->
+  @if (resultados.length) {
+    <div class="card" style="margin-top:16px;padding:0;overflow:hidden">
+      <div class="card-header"><mat-icon>group</mat-icon><span>{{ resultados.length }} resultados — seleccioná un contribuyente</span></div>
+      @for (p of resultados; track p.identificador) {
+        <div class="resultado-item" (click)="seleccionar(p)">
+          <div class="ri-nombre">{{ p.apellido }}, {{ p.nombre }}</div>
+          <div class="ri-meta">CUIT {{ p.cuitCuil }} &nbsp;·&nbsp; ID {{ p.identificador }}</div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (persona) {
+    <!-- Encabezado contribuyente -->
+    <div class="contribuyente-header card">
+      <div class="ch-info">
+        <div class="ch-nombre">{{ persona!.apellido }}, {{ persona!.nombre }}</div>
+        <div class="ch-meta">CUIT {{ persona!.cuitCuil }} &nbsp;·&nbsp; ID {{ persona!.identificador }}</div>
+      </div>
+      @if (totalActualizado > 0) {
+        <div class="ch-total">
+          <div class="ch-total-label">Deuda total actualizada</div>
+          <div class="ch-total-valor">{{ totalActualizado | currency:'ARS':'symbol':'1.2-2' }}</div>
+        </div>
+      } @else {
+        <div class="sin-deuda-badge"><mat-icon>check_circle</mat-icon> Sin deuda</div>
+      }
+    </div>
+
+    <!-- Resumen por tipo -->
+    @if (resumen.length) {
+      <div class="card" style="margin-top:16px;padding:0;overflow:hidden">
+        <div class="card-header"><mat-icon>pie_chart</mat-icon><span>Resumen por tipo de bien</span></div>
+        <table mat-table [dataSource]="resumen">
+          <ng-container matColumnDef="tipoBien">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let r"><mat-chip>{{ r.tipoBien }}</mat-chip></td>
+          </ng-container>
+          <ng-container matColumnDef="montoHistorico">
+            <th mat-header-cell *matHeaderCellDef>Capital original</th>
+            <td mat-cell *matCellDef="let r">{{ r.montoHistorico | currency:'ARS':'symbol':'1.2-2' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="montoActualizado">
+            <th mat-header-cell *matHeaderCellDef>Actualizado</th>
+            <td mat-cell *matCellDef="let r"><strong style="color:var(--color-danger)">{{ r.montoActualizado | currency:'ARS':'symbol':'1.2-2' }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="fechaActualizacion">
+            <th mat-header-cell *matHeaderCellDef>Al</th>
+            <td mat-cell *matCellDef="let r">{{ r.fechaActualizacion | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="colsResumen"></tr>
+          <tr mat-row *matRowDef="let row; columns: colsResumen;"></tr>
+        </table>
+      </div>
+    }
+
+    <!-- Cuotas pendientes -->
+    @if (cuotas.length) {
+      <div class="card" style="margin-top:16px;padding:0;overflow:hidden">
+        <div class="card-header">
+          <mat-icon>list_alt</mat-icon>
+          <span>Cuotas pendientes ({{ cuotas.length }})</span>
+        </div>
+        <table mat-table [dataSource]="cuotas">
+          <ng-container matColumnDef="periodo">
+            <th mat-header-cell *matHeaderCellDef>Período</th>
+            <td mat-cell *matCellDef="let c"><strong>{{ c.periodo }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="tipoBien">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let c"><mat-chip>{{ c.tipoBien }}</mat-chip></td>
+          </ng-container>
+          <ng-container matColumnDef="claveBien">
+            <th mat-header-cell *matHeaderCellDef>Clave</th>
+            <td mat-cell *matCellDef="let c">{{ c.claveBien }}</td>
+          </ng-container>
+          <ng-container matColumnDef="capitalFacturado">
+            <th mat-header-cell *matHeaderCellDef>Capital</th>
+            <td mat-cell *matCellDef="let c">{{ c.capitalFacturado | currency:'ARS':'symbol':'1.2-2' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="deudaTotalActualizada">
+            <th mat-header-cell *matHeaderCellDef>Total actualizado</th>
+            <td mat-cell *matCellDef="let c"><strong>{{ c.deudaTotalActualizada | currency:'ARS':'symbol':'1.2-2' }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="imp1Vence">
+            <th mat-header-cell *matHeaderCellDef>1° vencimiento</th>
+            <td mat-cell *matCellDef="let c">{{ c.imp1Vence | currency:'ARS':'symbol':'1.2-2' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="fechaVencimiento1">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let c">{{ c.fechaVencimiento1 | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="colsCuotas"></tr>
+          <tr mat-row *matRowDef="let row; columns: colsCuotas;"></tr>
+        </table>
+      </div>
+    }
+  }
+</div>

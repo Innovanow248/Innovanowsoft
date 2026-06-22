@@ -1,0 +1,74 @@
+// =============================================================
+// ANGULAR MATERIAL THEME — usa los tokens de _tokens.scss
+// =============================================================
+@use '@angular/material' as mat;
+
+// Paleta primaria: azul medianoche
+$pgm-primary: mat.m2-define-palette((
+  50:   #e8edf3,
+  100:  #c5d0de,
+  200:  #9fb0c7,
+  300:  #7890b0,
+  400:  #5b789f,
+  500:  #3e608e,
+  600:  #1E2D42,
+  700:  #162338,
+  800:  #0D1B2E,
+  900:  #060e19,
+  contrast: (
+    50:   #0D1B2E,
+    100:  #0D1B2E,
+    200:  #0D1B2E,
+    300:  #FFFFFF,
+    400:  #FFFFFF,
+    500:  #FFFFFF,
+    600:  #FFFFFF,
+    700:  #FFFFFF,
+    800:  #FFFFFF,
+    900:  #FFFFFF,
+  )
+), 800, 600, 900);
+
+// Paleta de acento: ámbar
+$pgm-accent: mat.m2-define-palette((
+  50:   #FEF9ED,
+  100:  #FEF3DC,
+  200:  #FDDEA0,
+  300:  #FCC864,
+  400:  #F5B83A,
+  500:  #F5A623,
+  600:  #E89410,
+  700:  #C97D0A,
+  800:  #8B5E09,
+  900:  #5C3D05,
+  contrast: (
+    50:   #0D1B2E,
+    100:  #0D1B2E,
+    200:  #0D1B2E,
+    300:  #0D1B2E,
+    400:  #0D1B2E,
+    500:  #0D1B2E,
+    600:  #0D1B2E,
+    700:  #FFFFFF,
+    800:  #FFFFFF,
+    900:  #FFFFFF,
+  )
+), 500, 300, 800);
+
+// Paleta de advertencia: rojo
+$pgm-warn: mat.m2-define-palette(mat.$m2-red-palette);
+
+// Tema light (default)
+$pgm-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $pgm-primary,
+    accent:  $pgm-accent,
+    warn:    $pgm-warn,
+  ),
+  typography: mat.m2-define-typography-config(
+    $font-family: 'Calibri, Trebuchet MS, Arial, sans-serif',
+  ),
+  density: 0,
+));
+
+@include mat.all-component-themes($pgm-theme);

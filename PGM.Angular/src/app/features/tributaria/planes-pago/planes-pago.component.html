@@ -1,0 +1,53 @@
+<div class="page-container">
+  <div class="eyebrow">Administración Tributaria</div>
+  <h1 class="page-title">Planes de Pago</h1>
+
+  <div class="card filter-card">
+    <form [formGroup]="form" (ngSubmit)="cargar()" class="filter-row">
+      <mat-form-field appearance="outline" class="field-tipo">
+        <mat-label>Tipo de bien</mat-label>
+        <select matNativeControl formControlName="tipoBien">
+          <option value="">— Seleccione —</option>
+          <option *ngFor="let t of allTipos" [value]="t.codigoTipoBien">
+            {{ t.codigoTipoBien }} — {{ t.concepto }}
+          </option>
+        </select>
+      </mat-form-field>
+
+      <button class="btn-action" type="submit"
+              [disabled]="loading() || !form.value.tipoBien">
+        Ver planes
+      </button>
+    </form>
+  </div>
+
+  @if (planes().length) {
+    <div class="card" style="margin-top:16px;padding:0;overflow:hidden">
+      <div class="card-header">
+        <mat-icon>view_list</mat-icon>
+        <span>Planes para <strong>{{ conceptoActual() }}</strong></span>
+        <mat-chip class="chip-count">{{ planes().length }} plan(es)</mat-chip>
+      </div>
+      <table mat-table [dataSource]="planes()">
+        <ng-container matColumnDef="tipoPlan">
+          <th mat-header-cell *matHeaderCellDef>Código plan</th>
+          <td mat-cell *matCellDef="let p"><strong>{{ p.tipoPlan }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="designacionPlan">
+          <th mat-header-cell *matHeaderCellDef>Designación</th>
+          <td mat-cell *matCellDef="let p">{{ p.designacionPlan || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="cantidadCuotas">
+          <th mat-header-cell *matHeaderCellDef>Cuotas</th>
+          <td mat-cell *matCellDef="let p">
+            <span class="badge badge--info">{{ p.cantidadCuotas }}</span>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="cols"></tr>
+        <tr mat-row *matRowDef="let row; columns: cols;"></tr>
+      </table>
+    </div>
+  } @else if (!loading() && form.value.tipoBien) {
+    <div class="amber-banner" style="margin-top:16px">Sin planes definidos para este tipo de bien.</div>
+  }
+</div>

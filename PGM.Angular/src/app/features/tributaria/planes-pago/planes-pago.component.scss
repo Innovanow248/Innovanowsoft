@@ -1,0 +1,18 @@
+.filter-card { padding: var(--spacing-md) var(--spacing-lg); }
+.tipo-code { font-weight: 700; font-size: 13px; margin-right: 8px; color: var(--color-primary); }
+.tipo-desc { font-size: 12px; color: var(--color-text-muted); }
+.filter-row  { display:flex; gap:var(--spacing-md); align-items:flex-start; flex-wrap:wrap; }
+.field-tipo  { min-width:320px; }
+.btn-action  { height:56px; padding:0 24px; margin-top:4px; flex-shrink:0;
+               background:var(--color-primary); color:#fff; border:none;
+               border-radius:4px; font-size:14px; font-weight:500;
+               cursor:pointer; white-space:nowrap;
+               &:disabled { opacity:.55; cursor:not-allowed; } }
+.card-header {
+  display:flex; align-items:center; gap:8px;
+  padding:var(--spacing-md) var(--spacing-lg);
+  border-bottom:1px solid var(--color-border);
+  font-weight:700; color:var(--color-text-heading); font-size:14px;
+  mat-icon { color:var(--color-primary); font-size:20px; width:20px; height:20px; }
+}
+.chip-count { margin-left:auto; font-size:12px; }

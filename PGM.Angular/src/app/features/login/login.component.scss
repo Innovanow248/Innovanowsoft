@@ -1,0 +1,101 @@
+.login-page {
+  min-height: 100vh;
+  background: var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  // Barra ámbar lateral (identidad InnovaNow)
+  &::before {
+    content: '';
+    position: fixed;
+    left: 0; top: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--color-accent);
+  }
+
+  // Círculo de textura (fondo)
+  &::after {
+    content: '';
+    position: fixed;
+    right: -15vw;
+    top: -15vh;
+    width: 60vw;
+    height: 60vw;
+    border-radius: 50%;
+    background: var(--color-primary-light);
+    z-index: 0;
+  }
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 40px 48px;
+  width: 360px;
+  box-shadow: var(--shadow-elevated);
+
+  &__logo {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+
+    .logo-primary { color: var(--color-primary); }
+    .logo-accent  { color: var(--color-accent); }
+  }
+
+  &__subtitle {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    margin: 0 0 32px 0;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  mat-form-field { width: 100%; }
+}
+
+.login-error {
+  background: #FFEBEE;
+  color: var(--color-danger);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: var(--font-size-sm);
+  margin-top: -8px;
+}
+
+.login-btn {
+  background: var(--color-primary) !important;
+  color: white !important;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &:hover:not(:disabled) { background: var(--color-primary-light) !important; }
+  &:disabled { opacity: 0.6; }
+}
+
+.login-credit {
+  position: relative;
+  z-index: 1;
+  margin-top: 24px;
+  font-size: 13px;
+  font-weight: 700;
+
+  .logo-credit-innova { color: rgba(255,255,255,0.6); }
+  .logo-credit-now    { color: var(--color-accent); }
+}

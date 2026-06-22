@@ -1,0 +1,208 @@
+.filter-card  { padding: var(--spacing-md) var(--spacing-lg); }
+.filter-row   { display:flex; gap:var(--spacing-md); align-items:flex-start; }
+.btn-action   { height:56px; padding:0 24px; margin-top:4px; background:var(--color-primary); color:#fff; border:none; border-radius:4px; font-size:14px; font-weight:500; cursor:pointer; &:disabled{opacity:.55;cursor:not-allowed;} }
+
+// ── KPIs ──────────────────────────────────────────────────────────────────────
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+.ejecucion-card .ej-bar { margin-top:8px; border-radius:4px; }
+.color-success { color: var(--color-success); }
+.color-warning { color: var(--color-warning); }
+.color-danger  { color: var(--color-danger);  }
+
+// ── Árbol ─────────────────────────────────────────────────────────────────────
+.tree-card {
+  margin-top: var(--spacing-md);
+  padding: 0;
+  overflow: hidden;
+}
+
+.card-header {
+  display:flex; align-items:center; gap:8px;
+  padding:var(--spacing-md) var(--spacing-lg);
+  border-bottom:1px solid var(--color-border);
+  font-weight:700; color:var(--color-text-heading); font-size:14px;
+  mat-icon { color:var(--color-primary); font-size:20px; width:20px; height:20px; }
+
+  .header-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+  }
+}
+
+.btn-tree-action {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  color: #64748b;
+  &:hover { background: #f1f5f9; }
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+// Columnas — grid compartido entre header y filas
+$cols: 32px 110px 1fr 120px 110px 120px 110px 110px 40px;
+
+.tree-header {
+  display: grid;
+  grid-template-columns: $cols;
+  align-items: center;
+  padding: 6px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.tree-row {
+  display: grid;
+  grid-template-columns: $cols;
+  align-items: center;
+  padding: 5px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background .12s;
+  font-size: 13px;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: #f8fafc; }
+
+  &.is-group {
+    background: #fafbff;
+    &:hover { background: #f1f5f9; }
+  }
+
+  &.is-leaf:hover { background: #f8fafc; }
+}
+
+// Columnas individuales
+.col-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.col-code {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.col-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 8px;
+
+  &.font-bold   { font-weight: 700; color: #1e293b; }
+  &.font-medium { font-weight: 600; color: #334155; }
+}
+
+.col-money {
+  text-align: right;
+  font-size: 12px;
+  color: #334155;
+  padding-right: 8px;
+  white-space: nowrap;
+
+  &.muted { color: #94a3b8; }
+}
+
+.col-pct {
+  padding: 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.col-accion {
+  display: flex;
+  justify-content: center;
+}
+
+// Badges de código
+.code-badge {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #475569;
+  display: inline-block;
+
+  &.code-root  { background: #dbeafe; color: #1d4ed8; }
+  &.code-group { background: #ede9fe; color: #6d28d9; }
+}
+
+// Toggle button
+.toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #64748b;
+  &:hover { background: #e2e8f0; color: #0f172a; }
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+.leaf-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  display: inline-block;
+}
+
+// Barra de ejecución
+.pct-label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+mat-progress-bar {
+  border-radius: 2px;
+  height: 4px;
+
+  &.bar-success { --mdc-linear-progress-active-indicator-color: var(--color-success); }
+  &.bar-warning { --mdc-linear-progress-active-indicator-color: var(--color-warning); }
+  &.bar-danger  { --mdc-linear-progress-active-indicator-color: var(--color-danger);  }
+}
+
+// Utilidades
+.icon-btn {
+  background: none; border: none; cursor: pointer; border-radius: 4px;
+  padding: 4px; display: flex; align-items: center;
+  mat-icon { font-size: 16px; color: #94a3b8; width: 16px; height: 16px; }
+  &:hover mat-icon { color: var(--color-primary); }
+}
+.text-danger  { color: var(--color-danger); }
+.text-success { color: var(--color-success); }
+
+@media (max-width:900px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .tree-header { display:none; }
+  $cols-mobile: 28px 90px 1fr 90px 36px;
+  .tree-row {
+    grid-template-columns: $cols-mobile;
+    .col-money:nth-child(4), .col-money:nth-child(5), .col-money:nth-child(6), .col-pct { display:none; }
+  }
+}

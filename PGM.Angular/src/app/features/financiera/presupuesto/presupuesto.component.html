@@ -1,0 +1,137 @@
+<div class="page-container">
+  <div class="eyebrow">Administración Financiera</div>
+  <h1 class="page-title">Ejecución Presupuestaria</h1>
+
+  <!-- Filtro año -->
+  <div class="card filter-card">
+    <form [formGroup]="form" (ngSubmit)="cargar()" class="filter-row">
+      <mat-form-field appearance="outline" style="width:140px">
+        <mat-label>Año</mat-label>
+        <mat-icon matPrefix>calendar_today</mat-icon>
+        <input matInput formControlName="ano" maxlength="4" />
+      </mat-form-field>
+      <button class="btn-action" type="submit" [disabled]="loading()">Cargar</button>
+    </form>
+  </div>
+
+  @if (error()) {
+    <div class="amber-banner" style="margin-top:16px">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div style="text-align:center;padding:48px">
+      <mat-spinner diameter="40" />
+    </div>
+  }
+
+  @if (filas().length) {
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--color-info)">{{ totalAutorizado() | currency:'ARS':'symbol':'1.0-0' }}</div>
+        <div class="stat-label">Presupuesto autorizado</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--color-success)">{{ totalPagado() | currency:'ARS':'symbol':'1.0-0' }}</div>
+        <div class="stat-label">Pagado</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--color-warning)">{{ totalDisponible() | currency:'ARS':'symbol':'1.0-0' }}</div>
+        <div class="stat-label">Disponible</div>
+      </div>
+      <div class="stat-card ejecucion-card">
+        <div class="stat-value" [class]="'color-' + colorEjecucion(pctEjecucion())">{{ pctEjecucion() | number:'1.1-1' }}%</div>
+        <div class="stat-label">Ejecución global</div>
+        <mat-progress-bar mode="determinate" [value]="pctEjecucion()" class="ej-bar" />
+      </div>
+    </div>
+
+    <!-- Árbol de cuentas -->
+    <div class="card tree-card">
+      <div class="card-header">
+        <mat-icon>account_balance</mat-icon>
+        <span>Cuentas de erogación</span>
+        <div class="header-actions">
+          <button class="btn-tree-action" (click)="expandirTodo()" matTooltip="Expandir todo">
+            <mat-icon>unfold_more</mat-icon>
+          </button>
+          <button class="btn-tree-action" (click)="colapsarTodo()" matTooltip="Colapsar todo">
+            <mat-icon>unfold_less</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cabecera de columnas -->
+      <div class="tree-header">
+        <div class="col-toggle"></div>
+        <div class="col-code">Cuenta</div>
+        <div class="col-name">Designación</div>
+        <div class="col-money">Autorizado</div>
+        <div class="col-money">Afectado</div>
+        <div class="col-money">Pagado</div>
+        <div class="col-money">Disponible</div>
+        <div class="col-pct">% Ejec.</div>
+        <div class="col-accion"></div>
+      </div>
+
+      <!-- Filas del árbol -->
+      @for (node of filas(); track node.cuenta.nroCtaEro) {
+        <div class="tree-row"
+             [class.is-group]="node.tieneHijos"
+             [class.is-leaf]="!node.tieneHijos"
+             [style.padding-left.px]="node.nivel * 20">
+          <!-- Toggle -->
+          <div class="col-toggle">
+            @if (node.tieneHijos) {
+              <button class="toggle-btn" (click)="toggle(node)" [attr.aria-label]="estaAbierto(node.cuenta.nroCtaEro) ? 'Colapsar' : 'Expandir'">
+                <mat-icon>{{ estaAbierto(node.cuenta.nroCtaEro) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+              </button>
+            } @else {
+              <span class="leaf-dot"></span>
+            }
+          </div>
+
+          <!-- Código -->
+          <div class="col-code">
+            <span class="code-badge" [class.code-root]="node.nivel === 0" [class.code-group]="node.tieneHijos && node.nivel > 0">
+              {{ node.cuenta.nroCtaEro }}
+            </span>
+          </div>
+
+          <!-- Nombre -->
+          <div class="col-name" [class.font-bold]="node.nivel === 0" [class.font-medium]="node.nivel === 1">
+            {{ node.cuenta.designacion }}
+          </div>
+
+          <!-- Montos -->
+          <div class="col-money">{{ node.cuenta.presupuestoAutorizado | currency:'ARS':'symbol':'1.0-0' }}</div>
+          <div class="col-money muted">{{ node.cuenta.montoAfectado | currency:'ARS':'symbol':'1.0-0' }}</div>
+          <div class="col-money">
+            <strong>{{ node.cuenta.montoPagado | currency:'ARS':'symbol':'1.0-0' }}</strong>
+          </div>
+          <div class="col-money" [class.text-danger]="disponible(node.cuenta) < 0" [class.text-success]="disponible(node.cuenta) >= 0">
+            {{ disponible(node.cuenta) | currency:'ARS':'symbol':'1.0-0' }}
+          </div>
+
+          <!-- Barra de ejecución -->
+          <div class="col-pct">
+            <span class="pct-label" [class]="'color-' + colorEjecucion(ejecucionPct(node.cuenta))">
+              {{ ejecucionPct(node.cuenta) | number:'1.1-1' }}%
+            </span>
+            @if (node.cuenta.presupuestoAutorizado > 0) {
+              <mat-progress-bar mode="determinate" [value]="ejecucionPct(node.cuenta)"
+                [class]="'bar-' + colorEjecucion(ejecucionPct(node.cuenta))" />
+            }
+          </div>
+
+          <!-- Acción -->
+          <div class="col-accion">
+            <button class="icon-btn" (click)="ajustar(node.cuenta)" matTooltip="Ajustar presupuesto">
+              <mat-icon>tune</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

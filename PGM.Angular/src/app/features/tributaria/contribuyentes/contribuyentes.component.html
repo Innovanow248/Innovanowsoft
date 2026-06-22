@@ -1,0 +1,254 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <div class="eyebrow">Administración Tributaria</div>
+      <h1 class="page-title">Contribuyentes</h1>
+    </div>
+    <button class="btn-header" (click)="abrirNuevo()">
+      <mat-icon>person_add</mat-icon> Nuevo contribuyente
+    </button>
+  </div>
+
+  <!-- Buscador -->
+  <div class="card search-card">
+    <form [formGroup]="form" (ngSubmit)="buscar()" class="search-row">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>CUIT, DNI o Apellido</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput formControlName="busqueda" placeholder="Ej: 20123456789 · 12345678 · GARCIA" />
+      </mat-form-field>
+      <button class="btn-action" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Buscando…' : 'Buscar' }}
+      </button>
+    </form>
+    <p class="search-hint">Ingresá CUIT (11 dígitos), DNI o parte del apellido</p>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="amber-banner" style="margin-top:16px">{{ error() }}</div>
+  }
+
+  <!-- Lista de resultados (búsqueda por apellido) -->
+  @if (esLista && lista.length) {
+    <div class="card" style="margin-top:16px; padding:0; overflow:hidden">
+      <div class="card-header">
+        <mat-icon>people</mat-icon>
+        <span>{{ lista.length }} resultado(s)</span>
+      </div>
+      <table mat-table [dataSource]="lista">
+        <ng-container matColumnDef="identificador">
+          <th mat-header-cell *matHeaderCellDef>ID</th>
+          <td mat-cell *matCellDef="let p">{{ p.identificador }}</td>
+        </ng-container>
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef>Apellido y Nombre</th>
+          <td mat-cell *matCellDef="let p"><strong>{{ p.apellido }}, {{ p.nombre }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="cuitCuil">
+          <th mat-header-cell *matHeaderCellDef>CUIT/CUIL</th>
+          <td mat-cell *matCellDef="let p">{{ p.cuitCuil }}</td>
+        </ng-container>
+        <ng-container matColumnDef="documento">
+          <th mat-header-cell *matHeaderCellDef>Documento</th>
+          <td mat-cell *matCellDef="let p">{{ p.tipoDocumento }} {{ p.documento }}</td>
+        </ng-container>
+        <ng-container matColumnDef="localidad">
+          <th mat-header-cell *matHeaderCellDef>Localidad</th>
+          <td mat-cell *matCellDef="let p">{{ p.localidad }}</td>
+        </ng-container>
+        <ng-container matColumnDef="accion">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let p">
+            <button mat-icon-button (click)="seleccionar(p)" matTooltip="Ver detalle">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="colsPersonas"></tr>
+        <tr mat-row *matRowDef="let row; columns: colsPersonas;" class="clickable-row" (click)="seleccionar(row)"></tr>
+      </table>
+    </div>
+  }
+
+  <!-- Detalle del contribuyente seleccionado -->
+  @if (detalle) {
+    <div class="detalle-grid">
+
+      <!-- Ficha personal -->
+      <div class="card ficha-card">
+        <div class="ficha-header">
+          <div class="ficha-avatar">{{ detalle.persona?.apellido?.[0] }}</div>
+          <div>
+            <div class="ficha-nombre">{{ detalle.persona?.apellido }}, {{ detalle.persona?.nombre }}</div>
+            <div class="ficha-cuit">CUIT {{ detalle.persona?.cuitCuil }}</div>
+          </div>
+        </div>
+        <div class="ficha-actions">
+          <button mat-stroked-button (click)="abrirEditar(detalle.persona)">
+            <mat-icon>edit</mat-icon> Editar
+          </button>
+          <button mat-stroked-button (click)="abrirPortalWeb()" matTooltip="Alta / actualización portal web ciudadano">
+            <mat-icon>language</mat-icon> Portal web
+          </button>
+        </div>
+        <div class="ficha-datos">
+          <div class="ficha-dato"><span>ID</span><strong>{{ detalle.persona?.identificador }}</strong></div>
+          <div class="ficha-dato"><span>Documento</span><strong>{{ detalle.persona?.tipoDocumento }} {{ detalle.persona?.documento }}</strong></div>
+          <div class="ficha-dato"><span>Domicilio</span><strong>{{ detalle.persona?.domicilio }}</strong></div>
+          <div class="ficha-dato"><span>Localidad</span><strong>{{ detalle.persona?.localidad }}</strong></div>
+          @if (detalle.persona?.telefono) {
+            <div class="ficha-dato"><span>Teléfono</span><strong>{{ detalle.persona?.telefono }}</strong></div>
+          }
+          @if (detalle.persona?.email) {
+            <div class="ficha-dato"><span>Email</span><strong>{{ detalle.persona?.email }}</strong></div>
+          }
+        </div>
+      </div>
+
+      <!-- Resumen de deuda -->
+      <div class="card">
+        <div class="card-header">
+          <mat-icon>receipt_long</mat-icon>
+          <span>Resumen de Deuda</span>
+          @if (detalle.resumen?.length) {
+            <span class="total-badge">
+              Total: {{ totalDeuda(detalle.resumen) | currency:'ARS':'symbol':'1.2-2' }}
+            </span>
+          }
+        </div>
+        @if (detalle.resumen?.length) {
+          <table mat-table [dataSource]="detalle.resumen" style="margin-top:8px">
+            <ng-container matColumnDef="tipoBien">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let r"><mat-chip>{{ r.tipoBien }}</mat-chip></td>
+            </ng-container>
+            <ng-container matColumnDef="montoHistorico">
+              <th mat-header-cell *matHeaderCellDef>Capital</th>
+              <td mat-cell *matCellDef="let r">{{ r.montoHistorico | currency:'ARS':'symbol':'1.2-2' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="montoActualizado">
+              <th mat-header-cell *matHeaderCellDef>Actualizado</th>
+              <td mat-cell *matCellDef="let r"><strong>{{ r.montoActualizado | currency:'ARS':'symbol':'1.2-2' }}</strong></td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="colsResumen"></tr>
+            <tr mat-row *matRowDef="let row; columns: colsResumen;"></tr>
+          </table>
+          <button mat-stroked-button style="margin-top:12px" (click)="verDeuda(detalle.persona.identificador)">
+            <mat-icon>expand_more</mat-icon> Ver cuotas pendientes
+          </button>
+        } @else {
+          <p class="sin-deuda"><mat-icon>check_circle</mat-icon> Sin deuda registrada</p>
+        }
+      </div>
+
+    </div>
+
+    <!-- Bienes -->
+    <div class="card" style="margin-top:16px; padding:0; overflow:hidden">
+      <div class="card-header">
+        <mat-icon>home</mat-icon>
+        <span>Bienes ({{ detalle.bienes?.length ?? 0 }})</span>
+        <button class="btn-card-action" (click)="abrirAltaBien()">
+          <mat-icon>add</mat-icon> Alta bien
+        </button>
+      </div>
+      @if (detalle.bienes?.length) {
+        <table mat-table [dataSource]="detalle.bienes">
+          <ng-container matColumnDef="tipoBien">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let b"><mat-chip>{{ b.tipoBien }}</mat-chip></td>
+          </ng-container>
+          <ng-container matColumnDef="claveBien">
+            <th mat-header-cell *matHeaderCellDef>Clave</th>
+            <td mat-cell *matCellDef="let b">{{ b.claveBien }}</td>
+          </ng-container>
+          <ng-container matColumnDef="activo">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let b">
+              <span [class]="b.activo === 'S' ? 'badge badge--success' : 'badge badge--muted'">
+                {{ b.activo === 'S' ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="situacionDeuda">
+            <th mat-header-cell *matHeaderCellDef>Situación</th>
+            <td mat-cell *matCellDef="let b">
+              <span [class]="situacionClass(b.situacionDeuda)">{{ b.situacionDeuda }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="montoDeudaActualizado">
+            <th mat-header-cell *matHeaderCellDef>Deuda actualizada</th>
+            <td mat-cell *matCellDef="let b"><strong>{{ b.montoDeudaActualizado | currency:'ARS':'symbol':'1.2-2' }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="accion">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let b" class="accion-cell">
+              @if (esCatastro(b)) {
+                <button mat-icon-button matTooltip="Propietarios y mejoras" (click)="abrirCatastroDetalle(b); $event.stopPropagation()">
+                  <mat-icon>apartment</mat-icon>
+                </button>
+              }
+              <button mat-icon-button matTooltip="Cambio de titular" (click)="abrirCambioTitular(b); $event.stopPropagation()">
+                <mat-icon>swap_horiz</mat-icon>
+              </button>
+              @if (b.activo === 'S') {
+                <button mat-icon-button matTooltip="Dar de baja" color="warn"
+                        (click)="abrirBajaBien(b); $event.stopPropagation()">
+                  <mat-icon>remove_circle_outline</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="colsBienes"></tr>
+          <tr mat-row *matRowDef="let row; columns: colsBienes;"></tr>
+        </table>
+      } @else {
+        <p class="empty-state"><mat-icon>inbox</mat-icon> Sin bienes registrados.</p>
+      }
+    </div>
+
+    <!-- Cuotas pendientes (expandible) -->
+    @if (detalleDeuda().length) {
+      <div class="card" style="margin-top:16px; padding:0; overflow:hidden">
+        <div class="card-header"><mat-icon>list</mat-icon><span>Cuotas pendientes ({{ detalleDeuda().length }})</span></div>
+        <table mat-table [dataSource]="detalleDeuda()">
+          <ng-container matColumnDef="periodo">
+            <th mat-header-cell *matHeaderCellDef>Período</th>
+            <td mat-cell *matCellDef="let d">{{ d.periodo }}</td>
+          </ng-container>
+          <ng-container matColumnDef="tipoBien">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let d"><mat-chip>{{ d.tipoBien }}</mat-chip></td>
+          </ng-container>
+          <ng-container matColumnDef="claveBien">
+            <th mat-header-cell *matHeaderCellDef>Clave</th>
+            <td mat-cell *matCellDef="let d">{{ d.claveBien }}</td>
+          </ng-container>
+          <ng-container matColumnDef="capitalFacturado">
+            <th mat-header-cell *matHeaderCellDef>Capital</th>
+            <td mat-cell *matCellDef="let d">{{ d.capitalFacturado | currency:'ARS':'symbol':'1.2-2' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="deudaTotalActualizada">
+            <th mat-header-cell *matHeaderCellDef>Total actualizado</th>
+            <td mat-cell *matCellDef="let d"><strong>{{ d.deudaTotalActualizada | currency:'ARS':'symbol':'1.2-2' }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="imp1Vence">
+            <th mat-header-cell *matHeaderCellDef>1° vencimiento</th>
+            <td mat-cell *matCellDef="let d">{{ d.imp1Vence | currency:'ARS':'symbol':'1.2-2' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="accion">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let d">
+              <button mat-icon-button matTooltip="Registrar cobro" color="primary" (click)="abrirCobro(d)">
+                <mat-icon>payments</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="colsDeuda"></tr>
+          <tr mat-row *matRowDef="let row; columns: colsDeuda;"></tr>
+        </table>
+      </div>
+    }
+  }
+</div>

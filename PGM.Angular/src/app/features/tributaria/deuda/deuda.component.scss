@@ -1,0 +1,42 @@
+.search-card { padding: var(--spacing-md) var(--spacing-lg); }
+.search-row { display:flex; gap:var(--spacing-md); align-items:flex-start; .search-field{flex:1} }
+.search-btn { background:var(--color-primary); color:white; height:56px; min-width:100px; margin-top:4px;
+              border:none; border-radius:4px; font-size:14px; font-weight:500; cursor:pointer; padding:0 20px;
+              &:disabled { opacity:.55; cursor:not-allowed; } }
+
+.contribuyente-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+.ch-nombre { font-size:18px; font-weight:700; color:var(--color-text-heading); }
+.ch-meta   { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
+.ch-total  { text-align:right; }
+.ch-total-label { font-size:11px; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.5px; }
+.ch-total-valor { font-size:28px; font-weight:700; color:var(--color-danger); }
+
+.sin-deuda-badge {
+  display:flex; align-items:center; gap:6px;
+  color:var(--color-success); font-weight:700; font-size:15px;
+  mat-icon { font-size:22px; }
+}
+
+.resultado-item {
+  padding: 12px var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  &:last-child { border-bottom: none; }
+  &:hover { background: var(--color-surface-hover, #f8fafc); }
+}
+.ri-nombre { font-size:14px; font-weight:600; color:var(--color-text-heading); }
+.ri-meta   { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
+
+.card-header {
+  display:flex; align-items:center; gap:8px;
+  padding:var(--spacing-md) var(--spacing-lg);
+  border-bottom:1px solid var(--color-border);
+  font-weight:700; color:var(--color-text-heading); font-size:14px;
+  mat-icon { color:var(--color-primary); font-size:20px; width:20px; height:20px; }
+}

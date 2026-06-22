@@ -1,0 +1,163 @@
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+// ---- Sidebar ----
+.sidebar {
+  position: relative;
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width 0.25s ease;
+  overflow: hidden;
+
+  // Barra ámbar de identidad (izquierda)
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--color-accent);
+  }
+
+  &.collapsed {
+    width: 64px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 12px 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    min-height: 64px;
+  }
+
+  &__logo {
+    font-size: 18px;
+    font-weight: 700;
+    white-space: nowrap;
+
+    .logo-innova { color: #fff; }
+    .logo-now    { color: var(--color-accent); }
+  }
+
+  &__toggle {
+    color: var(--sidebar-text) !important;
+    flex-shrink: 0;
+  }
+
+  &__user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+
+    &-icon { color: var(--sidebar-text); font-size: 32px; width: 32px; height: 32px; }
+    &-name { color: #fff; font-size: 13px; font-weight: 600; }
+    &-grupo { color: var(--sidebar-text); font-size: 11px; }
+  }
+
+  &__nav {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+    flex: 1;
+    overflow-y: auto;
+
+    .nav-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 12px 6px 20px;
+      color: var(--color-accent);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin-top: 4px;
+
+      &:first-child { border-top: none; margin-top: 0; }
+
+      mat-icon { font-size: 14px; width: 14px; height: 14px; color: var(--color-accent); }
+    }
+
+    .nav-section-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin-top: 4px;
+      cursor: default;
+
+      &:first-child { border-top: none; margin-top: 0; }
+
+      mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--color-accent); opacity: 0.7; }
+    }
+
+    li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px 10px 20px;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+
+      mat-icon { font-size: 20px; width: 20px; height: 20px; flex-shrink: 0; }
+
+      &:hover {
+        background: var(--sidebar-item-hover);
+        color: #fff;
+      }
+
+      &.active {
+        background: rgba(245, 166, 35, 0.12);
+        color: #fff;
+        border-left-color: var(--color-accent);
+
+        mat-icon { color: var(--color-accent); }
+      }
+    }
+  }
+
+  &__footer {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 8px 0;
+
+    a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px 10px 20px;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 13px;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+
+      mat-icon { font-size: 20px; width: 20px; height: 20px; }
+
+      &:hover { background: var(--sidebar-item-hover); color: #fff; }
+    }
+  }
+}
+
+// ---- Contenido principal ----
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--color-bg);
+}
