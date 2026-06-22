@@ -1,0 +1,6 @@
+@SAF.API_HostAddress = http://localhost:5115
+
+GET {{SAF.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

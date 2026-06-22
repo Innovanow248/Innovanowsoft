@@ -1,0 +1,26 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+*.suo
+*.db
+
+# Configuración local con credenciales
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Local.json
+
+# Angular
+**/node_modules/
+**/dist/
+**/.angular/
+**/npm-debug.log
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
