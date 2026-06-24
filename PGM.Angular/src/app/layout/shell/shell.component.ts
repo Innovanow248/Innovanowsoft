@@ -103,9 +103,14 @@ export class ShellComponent {
       title: 'Administración Tributaria',
       icon: 'account_balance_wallet',
       items: [
-        { label: 'Contribuyentes', icon: 'people',        route: '/tributaria/contribuyentes' },
-        { label: 'Deuda',          icon: 'receipt_long',  route: '/tributaria/deuda' },
-        { label: 'Planes de Pago', icon: 'event_repeat',  route: '/tributaria/planes-pago' },
+        { label: 'Inmobiliario',   icon: 'home_work',      route: '/tributaria/inmobiliario' },
+        { label: 'Automotores',    icon: 'directions_car', route: '/tributaria/automotores' },
+        { label: 'Cementerio',     icon: 'park',           route: '/tributaria/cementerio' },
+        { label: 'Catastro',       icon: 'map',            route: '/tributaria/catastro' },
+        { label: 'Comercio',       icon: 'storefront',     route: '/tributaria/comercio' },
+        { label: 'Contribuyentes', icon: 'people',         route: '/tributaria/contribuyentes' },
+        { label: 'Deuda',          icon: 'receipt_long',   route: '/tributaria/deuda' },
+        { label: 'Planes de Pago', icon: 'event_repeat',   route: '/tributaria/planes-pago' },
         { label: 'Padrón',         icon: 'domain',         route: '/tributaria/padron' },
         { label: 'Tasas',          icon: 'percent',        route: '/tributaria/referencia/tasas' },
         { label: 'Valuación Auto', icon: 'directions_car', route: '/tributaria/referencia/valuacion-automotores' },
@@ -121,6 +126,13 @@ export class ShellComponent {
         { label: 'Facturas',        icon: 'receipt_long',    route: '/financiera/facturas' },
         { label: 'Proveedores',     icon: 'storefront',      route: '/financiera/proveedores' },
         { label: 'Notas de Pedido', icon: 'assignment',      route: '/financiera/notas-pedido' },
+      ],
+    },
+    {
+      title: 'Seguridad',
+      icon: 'admin_panel_settings',
+      items: [
+        { label: 'Usuarios', icon: 'manage_accounts', route: '/admin/usuarios' },
       ],
     },
   ];

@@ -10,7 +10,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: 'dashboard',                  loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
-      { path: 'tributaria/contribuyentes',  loadComponent: () => import('./features/tributaria/contribuyentes/contribuyentes.component').then(m => m.ContribuyentesComponent) },
+      { path: 'tributaria/contribuyentes',  data: { titulo: 'Contribuyentes', botonLabel: 'Nuevo contribuyente', botonIcono: 'person_add' },                                                        loadComponent: () => import('./features/tributaria/contribuyentes/contribuyentes.component').then(m => m.ContribuyentesComponent) },
+      { path: 'tributaria/inmobiliario',    data: { titulo: 'Inmobiliario',  botonLabel: 'Nuevo inmueble',       botonIcono: 'add_home',        tipoBienes: ['ININ'] },              loadComponent: () => import('./features/tributaria/contribuyentes/contribuyentes.component').then(m => m.ContribuyentesComponent) },
+      { path: 'tributaria/automotores',     data: { titulo: 'Automotores',   botonLabel: 'Nuevo vehículo',       botonIcono: 'directions_car',  tipoBienes: ['AUAU'] },              loadComponent: () => import('./features/tributaria/contribuyentes/contribuyentes.component').then(m => m.ContribuyentesComponent) },
+      { path: 'tributaria/cementerio',      data: { titulo: 'Cementerio',    botonLabel: 'Nueva parcela',        botonIcono: 'park',            tipoBienes: ['CECE'] },              loadComponent: () => import('./features/tributaria/contribuyentes/contribuyentes.component').then(m => m.ContribuyentesComponent) },
+      { path: 'tributaria/catastro',        data: { titulo: 'Catastro',      botonLabel: 'Nuevo catastro',       botonIcono: 'map',             tipoBienes: ['CACA','OBSA','OBSC'] }, loadComponent: () => import('./features/tributaria/contribuyentes/contribuyentes.component').then(m => m.ContribuyentesComponent) },
+      { path: 'tributaria/comercio',        data: { titulo: 'Comercio',      botonLabel: 'Nuevo comercio',       botonIcono: 'storefront',      tipoBienes: ['CICI'] },              loadComponent: () => import('./features/tributaria/contribuyentes/contribuyentes.component').then(m => m.ContribuyentesComponent) },
       { path: 'tributaria/deuda',           loadComponent: () => import('./features/tributaria/deuda/deuda.component').then(m => m.DeudaComponent) },
       { path: 'tributaria/planes-pago',     loadComponent: () => import('./features/tributaria/planes-pago/planes-pago.component').then(m => m.PlanesPagoComponent) },
       { path: 'tributaria/padron',            loadComponent: () => import('./features/tributaria/padron/padron.component').then(m => m.PadronComponent) },
@@ -22,6 +27,7 @@ export const routes: Routes = [
       { path: 'financiera/facturas',        loadComponent: () => import('./features/financiera/facturas/facturas.component').then(m => m.FacturasFinancieraComponent) },
       { path: 'financiera/proveedores',     loadComponent: () => import('./features/financiera/proveedores/proveedores.component').then(m => m.ProveedoresComponent) },
       { path: 'financiera/notas-pedido',    loadComponent: () => import('./features/financiera/notas-pedido/notas-pedido.component').then(m => m.NotasPedidoFinancieraComponent) },
+      { path: 'admin/usuarios',             loadComponent: () => import('./features/seguridad/usuarios/usuarios.component').then(m => m.UsuariosComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ]
   },

@@ -12,6 +12,7 @@ builder.Services.AddSingleton(new DbConnectionFactory(connStr));
 
 // ── Repositorios ───────────────────────────────────────────────────────────
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<ISeguridadRepository, SeguridadRepository>();
 builder.Services.AddScoped<IPersonaRepository, PersonaRepository>();
 builder.Services.AddScoped<ITributariaRepository, TributariaRepository>();
 builder.Services.AddScoped<IFinancieraRepository, FinancieraRepository>();
@@ -52,6 +53,9 @@ builder.Services.AddCors(opt =>
                                 .AllowAnyHeader()
                                 .AllowAnyMethod()));
 
+// ── Exception handling ─────────────────────────────────────────────────────
+builder.Services.AddProblemDetails();
+
 // ── Swagger / Controllers ──────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -78,10 +82,13 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.UseCors();
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
 app.UseSwagger();
 app.UseSwaggerUI();
-
-app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

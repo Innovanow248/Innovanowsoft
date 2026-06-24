@@ -1,0 +1,12 @@
+-- Inicializa el contador de ID_BIEN en GEN_CONTADOR
+-- Solo inserta si no existe (el max ID actual en RT_PADRON_BASE es 04JXM = 212458 en decimal)
+IF NOT EXISTS (SELECT 1 FROM GEN_CONTADOR WHERE RTRIM(TIPO_CONTADOR) = 'ID_BIEN')
+BEGIN
+    INSERT INTO GEN_CONTADOR (TIPO_CONTADOR, CONTADOR)
+    VALUES ('ID_BIEN', 212458)
+    PRINT 'Contador ID_BIEN creado con valor inicial 212458 (continuación de max existente 04JXM)'
+END
+ELSE
+BEGIN
+    PRINT 'Contador ID_BIEN ya existe: ' + CAST((SELECT CONTADOR FROM GEN_CONTADOR WHERE RTRIM(TIPO_CONTADOR) = 'ID_BIEN') AS VARCHAR)
+END

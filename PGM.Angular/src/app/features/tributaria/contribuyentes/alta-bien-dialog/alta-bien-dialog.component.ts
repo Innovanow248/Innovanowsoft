@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgFor, NgIf } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,7 +7,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatStepperModule } from '@angular/material/stepper';
-import { TributariaService, TipoBien } from '../../../../core/services/tributaria.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TributariaService, TipoBien, Persona } from '../../../../core/services/tributaria.service';
 
 @Component({
   selector: 'app-alta-bien-dialog',
@@ -15,12 +16,41 @@ import { TributariaService, TipoBien } from '../../../../core/services/tributari
   imports: [
     ReactiveFormsModule, NgFor, NgIf,
     MatDialogModule, MatFormFieldModule, MatInputModule,
-    MatButtonModule, MatIconModule, MatStepperModule,
+    MatButtonModule, MatIconModule, MatStepperModule, MatProgressSpinnerModule,
   ],
   template: `
-<h2 mat-dialog-title><mat-icon>add_circle</mat-icon> Alta de Bien en Padrón</h2>
+<h2 mat-dialog-title><mat-icon>add_circle</mat-icon> {{ titulo }}</h2>
 
 <mat-dialog-content>
+
+  <!-- Búsqueda de contribuyente (sólo cuando no viene pre-cargado) -->
+  @if (!data.identificador) {
+    <div class="contribuyente-search">
+      <p class="search-label">Primero buscá el contribuyente titular</p>
+      <div class="search-row">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>CUIT / Documento / Apellido</mat-label>
+          <input matInput [formControl]="cuitCtrl" (keyup.enter)="buscarContribuyente()"
+                 placeholder="Ej: 20123456789 ó García" />
+        </mat-form-field>
+        <button type="button" class="btn-action" (click)="buscarContribuyente()" [disabled]="buscando()">
+          @if (buscando()) { <mat-spinner diameter="18" /> } @else { <mat-icon>search</mat-icon> }
+        </button>
+      </div>
+      @if (personaEncontrada()) {
+        <div class="persona-chip">
+          <mat-icon>person</mat-icon>
+          {{ personaEncontrada()!.apellido }}, {{ personaEncontrada()!.nombre }}
+          <span class="cuit-chip">{{ personaEncontrada()!.cuitCuil }}</span>
+        </div>
+      }
+      @if (errorBusqueda()) {
+        <div class="dialog-error">{{ errorBusqueda() }}</div>
+      }
+      <hr class="divider" />
+    </div>
+  }
+
   <mat-stepper linear #stepper>
 
     <!-- PASO 1: Datos del padrón -->
@@ -265,22 +295,50 @@ import { TributariaService, TipoBien } from '../../../../core/services/tributari
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     mat-form-field { width: 100%; margin-bottom: 4px; }
     .step-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-    .btn-action { height: 40px; padding: 0 20px; background: var(--color-primary); color: #fff;
-                  border: none; border-radius: 4px; font-size: 14px; cursor: pointer;
+    .btn-action { height: 40px; padding: 0 16px; background: var(--color-primary); color: #fff;
+                  border: none; border-radius: 4px; font-size: 14px; cursor: pointer; display:inline-flex; align-items:center; gap:6px;
                   &:disabled { opacity: .55; cursor: not-allowed; } }
     .dialog-error { background: #fef2f2; color: #b91c1c; padding: 8px 12px;
                     border-radius: 4px; margin-top: 8px; font-size: 13px; }
+    .contribuyente-search { margin-bottom: 8px; }
+    .search-label { font-size: 13px; color: var(--color-text-muted); margin: 0 0 8px; }
+    .search-row { display: flex; gap: 8px; align-items: flex-start; }
+    .search-row mat-form-field { margin-bottom: 0; }
+    .search-row .btn-action { margin-top: 4px; height: 40px; min-width: 44px; }
+    .persona-chip { display:flex; align-items:center; gap:6px; background:var(--color-surface-alt,#f1f5f9);
+                    padding:6px 12px; border-radius:20px; font-size:13px; font-weight:500; margin:4px 0 8px; width:fit-content; }
+    .persona-chip mat-icon { font-size:18px; height:18px; width:18px; color:var(--color-primary); }
+    .cuit-chip { font-size:11px; color:var(--color-text-muted); margin-left:4px; }
+    .divider { border:none; border-top:1px solid var(--color-border,#e2e8f0); margin:12px 0 8px; }
   `],
 })
 export class AltaBienDialogComponent {
   private svc  = inject(TributariaService);
   private fb   = inject(FormBuilder);
   private ref  = inject(MatDialogRef<AltaBienDialogComponent>);
-  data: { identificador: string } = inject(MAT_DIALOG_DATA);
+  data: { identificador?: string; tipoBienPreselecto?: string } = inject(MAT_DIALOG_DATA);
 
-  loading = signal(false);
-  error   = signal('');
+  loading          = signal(false);
+  error            = signal('');
+  buscando         = signal(false);
+  errorBusqueda    = signal('');
+  personaEncontrada = signal<Persona | null>(null);
   tipos: TipoBien[] = [];
+
+  cuitCtrl = new FormControl('');
+
+  get titulo() {
+    const tb = this.data.tipoBienPreselecto?.trim();
+    if (tb === 'AUAU') return 'Nuevo vehículo';
+    if (tb === 'CECE') return 'Nueva parcela';
+    if (['ININ','CACA','OBSA','OBSC'].includes(tb ?? '')) return 'Nuevo inmueble';
+    if (tb === 'CICI') return 'Nuevo comercio';
+    return 'Alta de Bien en Padrón';
+  }
+
+  get identificadorEfectivo(): string {
+    return this.data.identificador ?? this.personaEncontrada()?.identificador ?? '';
+  }
 
   paso1 = this.fb.nonNullable.group({
     tipoBien:  ['', Validators.required],
@@ -327,6 +385,37 @@ export class AltaBienDialogComponent {
 
   constructor() {
     this.svc.tiposBien$.subscribe(t => this.tipos = t);
+    if (this.data.tipoBienPreselecto) {
+      this.paso1.patchValue({ tipoBien: this.data.tipoBienPreselecto });
+    }
+  }
+
+  buscarContribuyente() {
+    const val = this.cuitCtrl.value?.trim() ?? '';
+    if (!val) return;
+    this.buscando.set(true);
+    this.errorBusqueda.set('');
+    this.personaEncontrada.set(null);
+
+    const soloDigitos = /^\d+$/.test(val);
+    const params = soloDigitos
+      ? (val.length >= 10 ? { cuit: val } : { documento: val })
+      : { apellido: val };
+
+    this.svc.buscar(params).subscribe({
+      next: (r: any) => {
+        this.buscando.set(false);
+        const persona: Persona | null = Array.isArray(r) ? (r.length === 1 ? r[0] : null) : (r?.persona ?? null);
+        if (persona) {
+          this.personaEncontrada.set(persona);
+        } else if (Array.isArray(r) && r.length > 1) {
+          this.errorBusqueda.set('Más de un resultado — ingresá el CUIT completo.');
+        } else {
+          this.errorBusqueda.set('No se encontró ningún contribuyente.');
+        }
+      },
+      error: () => { this.buscando.set(false); this.errorBusqueda.set('No se encontró ningún contribuyente.'); },
+    });
   }
 
   esAutomotor() { return this.paso1.value.tipoBien?.trim() === 'AUAU'; }
@@ -338,13 +427,14 @@ export class AltaBienDialogComponent {
 
   guardar() {
     if (this.paso1.invalid) return;
+    if (!this.identificadorEfectivo) {
+      this.error.set('Primero buscá y seleccioná un contribuyente.');
+      return;
+    }
     this.loading.set(true);
     this.error.set('');
 
-    const padron = {
-      ...this.paso1.getRawValue(),
-      identificador: this.data.identificador,
-    };
+    const padron = { ...this.paso1.getRawValue(), identificador: this.identificadorEfectivo };
 
     this.svc.altaPadron(padron).subscribe({
       next: ({ idBien }) => this.guardarDetalle(idBien),

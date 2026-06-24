@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { DecimalPipe, CurrencyPipe, NgClass } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,6 +36,20 @@ export class ContribuyentesComponent {
   private svc    = inject(TributariaService);
   private fb     = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private route  = inject(ActivatedRoute);
+
+  tipoBienesFilter = signal<string[]>([]);
+  titulo           = signal('Contribuyentes');
+  botonLabel       = signal('Nuevo contribuyente');
+  botonIcono       = signal('person_add');
+
+  constructor() {
+    const data = this.route.snapshot.data;
+    if (data['tipoBienes']?.length) this.tipoBienesFilter.set(data['tipoBienes']);
+    if (data['titulo'])             this.titulo.set(data['titulo']);
+    if (data['botonLabel'])         this.botonLabel.set(data['botonLabel']);
+    if (data['botonIcono'])         this.botonIcono.set(data['botonIcono']);
+  }
 
   form = this.fb.nonNullable.group({ busqueda: [''] });
 
@@ -47,7 +62,22 @@ export class ContribuyentesComponent {
 
   get esLista(): boolean { return Array.isArray(this.resultado()); }
   get lista(): Persona[] { return Array.isArray(this.resultado()) ? this.resultado() as Persona[] : []; }
-  get detalle() { return !Array.isArray(this.resultado()) && this.resultado() ? this.resultado() as any : null; }
+  get detalle() {
+    const raw = !Array.isArray(this.resultado()) && this.resultado() ? this.resultado() as any : null;
+    const f = this.tipoBienesFilter();
+    if (!raw || !f.length) return raw;
+    return {
+      ...raw,
+      bienes:  (raw.bienes  as BienPadron[] ).filter((b: BienPadron)   => f.includes(b.tipoBien?.trim())),
+      resumen: (raw.resumen as DeudaResumen[]).filter((r: DeudaResumen) => f.includes(r.tipoBien?.trim())),
+    };
+  }
+
+  get deudaFiltrada(): DeudaContribuyente[] {
+    const f = this.tipoBienesFilter();
+    if (!f.length) return this.detalleDeuda();
+    return this.detalleDeuda().filter(d => f.includes(d.tipoBien?.trim()));
+  }
 
   colsPersonas: string[] = ['identificador','nombre','cuitCuil','documento','localidad','accion'];
   colsBienes:   string[] = ['tipoBien','claveBien','activo','situacionDeuda','montoDeudaActualizado','accion'];
@@ -101,8 +131,18 @@ export class ContribuyentesComponent {
   }
 
   abrirNuevo() {
-    this.dialog.open(PersonaDialogComponent, { data: null, width: '600px', maxWidth: '95vw' })
-      .afterClosed().subscribe(res => { if (res) this.buscar(); });
+    const filtro = this.tipoBienesFilter();
+    if (filtro.length) {
+      // Pantalla filtrada (automotores, cementerio, etc.) — alta del tipo de bien
+      this.dialog.open(AltaBienDialogComponent, {
+        data: { tipoBienPreselecto: filtro[0] },
+        width: '680px', maxWidth: '95vw',
+      }).afterClosed().subscribe(res => { if (res) this.buscar(); });
+    } else {
+      // Pantalla general de contribuyentes — alta de persona
+      this.dialog.open(PersonaDialogComponent, { data: null, width: '600px', maxWidth: '95vw' })
+        .afterClosed().subscribe(res => { if (res) this.buscar(); });
+    }
   }
 
   abrirEditar(persona: Persona) {
@@ -113,8 +153,9 @@ export class ContribuyentesComponent {
   abrirAltaBien() {
     const p = this.seleccionado();
     if (!p) return;
+    const f = this.tipoBienesFilter();
     this.dialog.open(AltaBienDialogComponent, {
-      data: { identificador: p.identificador },
+      data: { identificador: p.identificador, tipoBienPreselecto: f.length === 1 ? f[0] : undefined },
       width: '700px', maxWidth: '95vw',
     }).afterClosed().subscribe(res => { if (res) this.recargarDetalle(); });
   }
