@@ -11,21 +11,27 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
         using var conn = db.Create();
         var result = await conn.QueryAsync<BienPadron>("""
             SELECT
-                RTRIM(ID_BIEN)          AS IdBien,
-                RTRIM(TIPO_BIEN)        AS TipoBien,
-                RTRIM(IDENTIFICADOR)    AS Identificador,
-                RTRIM(ISNULL(CLAVE_BIEN,''))          AS ClaveBien,
-                RTRIM(ISNULL(CODIGO_IMPRESION,''))     AS CodigoImpresion,
-                RTRIM(ACTIVO)           AS Activo,
-                RTRIM(IMPRIME)          AS Imprime,
-                RTRIM(ISNULL(EXENCION,'NOEX'))        AS Exencion,
-                RTRIM(ISNULL(TIPO_PLAN,'1 '))         AS TipoPlan,
-                RTRIM(ISNULL(SITUACION_DEUDA,'RE'))   AS SituacionDeuda,
-                ISNULL(MONTO_DEUDA_HISTORICO,0)       AS MontDeudaHistorico,
-                ISNULL(MONTO_DEUDA_ACTUALIZADO,0)     AS MontoDeudaActualizado
-            FROM RT_PADRON_BASE
-            WHERE RTRIM(IDENTIFICADOR) = @Identificador
-            ORDER BY TIPO_BIEN
+                RTRIM(pb.ID_BIEN)          AS IdBien,
+                RTRIM(pb.TIPO_BIEN)        AS TipoBien,
+                RTRIM(pb.IDENTIFICADOR)    AS Identificador,
+                RTRIM(ISNULL(pb.CLAVE_BIEN,''))          AS ClaveBien,
+                RTRIM(ISNULL(pb.CODIGO_IMPRESION,''))     AS CodigoImpresion,
+                RTRIM(pb.ACTIVO)           AS Activo,
+                RTRIM(pb.IMPRIME)          AS Imprime,
+                RTRIM(ISNULL(pb.EXENCION,'NOEX'))        AS Exencion,
+                RTRIM(ISNULL(pb.TIPO_PLAN,'1 '))         AS TipoPlan,
+                RTRIM(ISNULL(pb.SITUACION_DEUDA,'RE'))   AS SituacionDeuda,
+                ISNULL(pb.MONTO_DEUDA_HISTORICO,0)       AS MontDeudaHistorico,
+                ISNULL(pb.MONTO_DEUDA_ACTUALIZADO,0)     AS MontoDeudaActualizado,
+                NULLIF(RTRIM(ISNULL(a.DESCRIPCION_INDIVIDUAL, ISNULL(a.MARCA_VEHICULO,''))), '') AS Descripcion,
+                CASE WHEN pb.ACTIVO = '0'
+                     THEN COALESCE(pb.FECHA_BAJA, pb.LIQ_HASTA)
+                     ELSE NULL END                           AS FechaBaja
+            FROM RT_PADRON_BASE pb
+            LEFT JOIN RT_AUTOMOTORES a ON RTRIM(a.ID_AUTOMOTOR) = RTRIM(pb.ID_BIEN)
+                                      AND RTRIM(pb.TIPO_BIEN) = 'AUAU'
+            WHERE RTRIM(pb.IDENTIFICADOR) = @Identificador
+            ORDER BY pb.TIPO_BIEN
             """, new { Identificador = identificador });
         return result.ToList();
     }

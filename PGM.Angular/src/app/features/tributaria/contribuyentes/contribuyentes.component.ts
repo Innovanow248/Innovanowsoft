@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { DecimalPipe, CurrencyPipe, NgClass } from '@angular/common';
+import { DecimalPipe, CurrencyPipe, NgClass, DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -24,7 +24,7 @@ import { CatastroDetalleDialogComponent } from './catastro-detalle-dialog/catast
   selector: 'app-contribuyentes',
   standalone: true,
   imports: [
-    ReactiveFormsModule, DecimalPipe, CurrencyPipe, NgClass,
+    ReactiveFormsModule, DecimalPipe, CurrencyPipe, NgClass, DatePipe,
     MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule,
     MatTableModule, MatTabsModule, MatProgressSpinnerModule,
     MatChipsModule, MatTooltipModule,
@@ -80,7 +80,7 @@ export class ContribuyentesComponent {
   }
 
   colsPersonas: string[] = ['identificador','nombre','cuitCuil','documento','localidad','accion'];
-  colsBienes:   string[] = ['tipoBien','claveBien','activo','situacionDeuda','montoDeudaActualizado','accion'];
+  colsBienes:   string[] = ['tipoBien','claveBien','activo','situacionDeuda','montoDeudaActualizado','fechaBaja','accion'];
   colsDeuda:    string[] = ['periodo','tipoBien','claveBien','capitalFacturado','deudaTotalActualizada','imp1Vence','accion'];
   colsResumen:  string[] = ['tipoBien','montoHistorico','montoActualizado'];
 

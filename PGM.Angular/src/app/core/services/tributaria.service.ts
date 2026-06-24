@@ -23,6 +23,8 @@ export interface BienPadron {
   activo: string;
   situacionDeuda: string;
   montoDeudaActualizado: number;
+  descripcion: string | null;
+  fechaBaja: string | null;
 }
 
 export interface DeudaResumen {

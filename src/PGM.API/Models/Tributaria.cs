@@ -14,6 +14,8 @@ public class BienPadron
     public string? SituacionDeuda { get; set; }
     public decimal MontDeudaHistorico   { get; set; }
     public decimal MontoDeudaActualizado { get; set; }
+    public string? Descripcion           { get; set; }
+    public DateTime? FechaBaja           { get; set; }
 }
 
 public class DeudaContribuyente

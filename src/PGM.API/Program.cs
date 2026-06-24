@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using PGM.API;
 using PGM.API.Repositories;
 using PGM.API.Services;
 using System.Text;
@@ -9,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ── Base de datos ──────────────────────────────────────────────────────────
 var connStr = builder.Configuration.GetConnectionString("PROGRAM")!;
 builder.Services.AddSingleton(new DbConnectionFactory(connStr));
+builder.Services.AddSingleton<OracleConnectionFactory>();
 
 // ── Repositorios ───────────────────────────────────────────────────────────
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
@@ -16,9 +18,11 @@ builder.Services.AddScoped<ISeguridadRepository, SeguridadRepository>();
 builder.Services.AddScoped<IPersonaRepository, PersonaRepository>();
 builder.Services.AddScoped<ITributariaRepository, TributariaRepository>();
 builder.Services.AddScoped<IFinancieraRepository, FinancieraRepository>();
+builder.Services.AddScoped<IDevengamientoRepository, DevengamientoRepository>();
 
 // ── Servicios ──────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<OracleDevengamientoService>();
 
 // ── JWT ────────────────────────────────────────────────────────────────────
 var jwtSection = builder.Configuration.GetSection("Jwt");
