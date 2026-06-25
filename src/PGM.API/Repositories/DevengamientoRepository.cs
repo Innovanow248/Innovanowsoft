@@ -1063,70 +1063,70 @@ public class DevengamientoRepository(DbConnectionFactory db) : IDevengamientoRep
     public async Task<EstadoDevengamiento?> ObtenerEstadoDevengamiento(int idJurisdiccion, int? idTipoTributo)
     {
         using var conn = db.Create();
-        var where = "ID_JURISDICCION = @IdJurisdiccion AND FEC_FIN IS NULL";
+        var where = "ID_JURISDICCION = @IdJurisdiccion";
         if (idTipoTributo.HasValue) where += " AND ID_TIPO_TRIBUTO = @IdTipoTributo";
-        var result = await conn.QueryFirstOrDefaultAsync<EstadoDevengamiento>($"""
+        return await conn.QueryFirstOrDefaultAsync<EstadoDevengamiento>($"""
             SELECT TOP 1
                 ID_PORCENTAJE_CARGA AS IdPorcentajeCarga,
                 ID_JURISDICCION     AS IdJurisdiccion,
                 ID_TIPO_TRIBUTO     AS IdTipoTributo,
                 PORCENTAJE,
                 ESTADO,
-                MENSAJE,
+                MENSAJE_ERROR       AS Mensaje,
                 FEC_INICIO          AS FecInicio,
-                FEC_FIN             AS FecFin,
                 USR_OPERADOR        AS UsrOperador,
                 EJERCICIO
             FROM DEV_PORCENTAJE_CARGA
             WHERE {where}
-            ORDER BY FEC_INICIO DESC
+            ORDER BY ID_PORCENTAJE_CARGA DESC
             """, new { IdJurisdiccion = idJurisdiccion, IdTipoTributo = idTipoTributo });
-        return result;
     }
 
     public async Task<List<LogDevengamiento>> ObtenerLogDevengamiento(int idJurisdiccion, int take = 20)
     {
         using var conn = db.Create();
-        var result = await conn.QueryAsync<LogDevengamiento>($"""
-            SELECT TOP {take}
-                ID_LOG              AS IdLog,
-                ID_JURISDICCION     AS IdJurisdiccion,
-                ID_TIPO_TRIBUTO     AS IdTipoTributo,
-                TIPO_TRIBUTO        AS TipoTributo,
-                EJERCICIO,
-                RESULTADO,
-                MENSAJE,
-                FEC_EJECUCION       AS FecEjecucion,
-                USR_OPERADOR        AS UsrOperador,
-                CUENTAS_PROCESADAS  AS CuentasProcesadas,
-                CUENTAS_DEVENGADAS  AS CuentasDevengadas,
-                CUENTAS_ERROR       AS CuentasError,
-                DURACION_SEGUNDOS   AS DuracionSegundos
-            FROM DEV_DEVENGAMIENTO_LOG
-            WHERE ID_JURISDICCION = @IdJurisdiccion
-            ORDER BY FEC_EJECUCION DESC
-            """, new { IdJurisdiccion = idJurisdiccion });
+        var result = await conn.QueryAsync<LogDevengamiento>("""
+            SELECT TOP (@Take)
+                l.ID_T_DEVENGAMIENTO_LOG        AS IdLog,
+                l.ID_JURISDICCION               AS IdJurisdiccion,
+                l.ID_TIPO_TRIBUTO               AS IdTipoTributo,
+                ISNULL(t.TIPO_TRIBUTO,'')       AS TipoTributo,
+                CAST(l.ANIO_EJERCICIO AS varchar(4)) AS Ejercicio,
+                l.RESULTADO,
+                l.MENSAJE,
+                l.FEC_ING                       AS FecEjecucion,
+                l.USR_ING                       AS UsrOperador,
+                ISNULL(l.CUENTAS_PROCESADAS,0)  AS CuentasProcesadas,
+                ISNULL(l.CUENTAS_DEVENGADAS,0)  AS CuentasDevengadas,
+                ISNULL(l.CUENTAS_ERROR,0)       AS CuentasError,
+                ISNULL(l.DURACION_SEGUNDOS,0)   AS DuracionSegundos
+            FROM DEV_DEVENGAMIENTO_LOG l
+            LEFT JOIN DEV_TIPOS_TRIBUTOS t ON t.ID_TIPO_TIBUTO = l.ID_TIPO_TRIBUTO
+            WHERE l.ID_JURISDICCION = @IdJurisdiccion
+            ORDER BY l.FEC_ING DESC
+            """, new { IdJurisdiccion = idJurisdiccion, Take = take });
         return result.ToList();
     }
 
     public async Task<int> IniciarDevengamiento(EjecutarDevengamientoRequest req)
     {
         using var conn = db.Create();
-        // Marcar como completado cualquier proceso anterior en ejecución
         await conn.ExecuteAsync("""
             UPDATE DEV_PORCENTAJE_CARGA
-            SET FEC_FIN = GETDATE(), ESTADO = 'CANCELADO', MENSAJE = 'Cancelado por nueva ejecución'
-            WHERE ID_JURISDICCION = @IdJurisdiccion AND FEC_FIN IS NULL AND ESTADO = 'EN_PROCESO'
+            SET ESTADO = 'CANCELADO', MENSAJE_ERROR = 'Cancelado por nueva ejecución'
+            WHERE ID_JURISDICCION = @IdJurisdiccion AND ESTADO = 'EN_PROCESO'
             """, new { req.IdJurisdiccion });
 
-        var id = await conn.ExecuteScalarAsync<int>("""
+        return await conn.ExecuteScalarAsync<int>("""
+            DECLARE @newId INT = (SELECT ISNULL(MAX(ID_PORCENTAJE_CARGA),0)+1 FROM DEV_PORCENTAJE_CARGA);
             INSERT INTO DEV_PORCENTAJE_CARGA
-                (ID_JURISDICCION, ID_TIPO_TRIBUTO, PORCENTAJE, ESTADO, FEC_INICIO, USR_OPERADOR, EJERCICIO, FEC_ING, USR_ING)
+                (ID_PORCENTAJE_CARGA, ID_JURISDICCION, ID_TIPO_TRIBUTO, PORCENTAJE, ESTADO,
+                 OBJETO_REF, PROCESADAS, TOTAL, FEC_INICIO, USR_OPERADOR, EJERCICIO)
             VALUES
-                (@IdJurisdiccion, @IdTipoTributo, 0, 'EN_PROCESO', GETDATE(), @Usuario, @Ejercicio, GETDATE(), @Usuario);
-            SELECT SCOPE_IDENTITY();
+                (@newId, @IdJurisdiccion, @IdTipoTributo, 0, 'EN_PROCESO',
+                 'PGM.V2', 0, 0, GETDATE(), @Usuario, @Ejercicio);
+            SELECT @newId;
             """, new { req.IdJurisdiccion, req.IdTipoTributo, req.Usuario, req.Ejercicio });
-        return id;
     }
 
     public async Task ActualizarEstadoDevengamiento(int idPorcentajeCarga, decimal porcentaje, string estado, string? mensaje)
@@ -1134,22 +1134,24 @@ public class DevengamientoRepository(DbConnectionFactory db) : IDevengamientoRep
         using var conn = db.Create();
         await conn.ExecuteAsync("""
             UPDATE DEV_PORCENTAJE_CARGA
-            SET PORCENTAJE = @Porcentaje, ESTADO = @Estado, MENSAJE = @Mensaje,
-                FEC_FIN = CASE WHEN @Estado IN ('COMPLETADO','ERROR') THEN GETDATE() ELSE NULL END
+            SET PORCENTAJE = @Porcentaje, ESTADO = @Estado, MENSAJE_ERROR = @Mensaje
             WHERE ID_PORCENTAJE_CARGA = @Id
-            """, new { Id = idPorcentajeCarga, Porcentaje = porcentaje, Estado = estado, Mensaje = mensaje });
+            """, new { Id = idPorcentajeCarga, Porcentaje = (int)porcentaje, Estado = estado, Mensaje = mensaje });
     }
 
     public async Task RegistrarLogDevengamiento(LogDevengamiento log)
     {
         using var conn = db.Create();
         await conn.ExecuteAsync("""
+            DECLARE @newId INT = (SELECT ISNULL(MAX(ID_T_DEVENGAMIENTO_LOG),0)+1 FROM DEV_DEVENGAMIENTO_LOG);
             INSERT INTO DEV_DEVENGAMIENTO_LOG
-                (ID_JURISDICCION, ID_TIPO_TRIBUTO, TIPO_TRIBUTO, EJERCICIO, RESULTADO, MENSAJE,
-                 FEC_EJECUCION, USR_OPERADOR, CUENTAS_PROCESADAS, CUENTAS_DEVENGADAS, CUENTAS_ERROR, DURACION_SEGUNDOS)
+                (ID_T_DEVENGAMIENTO_LOG, ID_JURISDICCION, ID_TIPO_TRIBUTO, PROCESO,
+                 ANIO_EJERCICIO, USR_ING, FEC_ING,
+                 RESULTADO, MENSAJE, CUENTAS_PROCESADAS, CUENTAS_DEVENGADAS, CUENTAS_ERROR, DURACION_SEGUNDOS)
             VALUES
-                (@IdJurisdiccion, @IdTipoTributo, @TipoTributo, @Ejercicio, @Resultado, @Mensaje,
-                 GETDATE(), @UsrOperador, @CuentasProcesadas, @CuentasDevengadas, @CuentasError, @DuracionSegundos)
+                (@newId, @IdJurisdiccion, @IdTipoTributo, 'PGM.V2',
+                 TRY_CAST(@Ejercicio AS smallint), @UsrOperador, GETDATE(),
+                 @Resultado, @Mensaje, @CuentasProcesadas, @CuentasDevengadas, @CuentasError, @DuracionSegundos)
             """, log);
     }
 }
