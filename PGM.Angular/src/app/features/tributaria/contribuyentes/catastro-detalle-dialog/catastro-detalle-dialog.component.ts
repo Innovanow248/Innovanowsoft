@@ -27,6 +27,83 @@ import { TributariaService } from '../../../../core/services/tributaria.service'
 <mat-dialog-content>
   <mat-tab-group>
 
+    <!-- ── TAB: Datos del inmueble ───────────────────────────────────── -->
+    <mat-tab label="Datos del inmueble">
+      <div class="tab-content">
+        @if (loadingDatos()) { <mat-spinner diameter="32" style="margin:24px auto;display:block" /> }
+        @if (datos()) {
+          <div class="datos-grid">
+            <div class="dato-item">
+              <span class="dato-label">N° de cuenta</span>
+              <span class="dato-valor">{{ datos()!.nroRenta || '—' }}</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">N° catastral interno</span>
+              <span class="dato-valor">{{ datos()!.claveBien || '—' }}</span>
+            </div>
+            <div class="dato-item dato-full">
+              <span class="dato-label">Nomenclatura catastral</span>
+              <span class="dato-valor">{{ datos()!.nomenclaturaCatastral || '—' }}</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Designación oficial</span>
+              <span class="dato-valor">{{ datos()!.designacionOficial || '—' }}</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Matrícula / Folio real</span>
+              <span class="dato-valor">{{ datos()!.nroMatricula || '—' }}</span>
+            </div>
+            <div class="dato-item dato-full">
+              <span class="dato-label">Dirección</span>
+              <span class="dato-valor">
+                {{ datos()!.calle || '' }}
+                {{ datos()!.numeracionCalle ? 'N° ' + datos()!.numeracionCalle : '' }}
+                {{ datos()!.barrio ? '— ' + datos()!.barrio : '' }}
+                {{ datos()!.codigoPostal ? '(CP ' + datos()!.codigoPostal + ')' : '' }}
+              </span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Tipo de inmueble</span>
+              <span class="dato-valor">{{ datos()!.baldioEdificado === '01' ? 'Edificado' : datos()!.baldioEdificado === '00' ? 'Baldío' : (datos()!.baldioEdificado || '—') }}</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Ubicación terreno</span>
+              <span class="dato-valor">{{ datos()!.esquinaMedial === '01' ? 'Esquina' : datos()!.esquinaMedial === '04' ? 'Medial' : (datos()!.esquinaMedial || '—') }}</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Unidades locativas</span>
+              <span class="dato-valor">{{ datos()!.unidadesLocativas ?? '—' }}</span>
+            </div>
+            <div class="separator"></div>
+            <div class="dato-item">
+              <span class="dato-label">Superficie terreno</span>
+              <span class="dato-valor">{{ datos()!.superficieTerreno | number:'1.2-2' }} m²</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Metros de frente</span>
+              <span class="dato-valor">{{ datos()!.metrosFrente | number:'1.2-2' }} m</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Base imponible</span>
+              <span class="dato-valor monto">{{ datos()!.baseImponible | currency:'ARS':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Tasación terreno</span>
+              <span class="dato-valor monto">{{ datos()!.tasacionTerreno | currency:'ARS':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Valor terreno</span>
+              <span class="dato-valor monto">{{ datos()!.valorTerreno | currency:'ARS':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="dato-item">
+              <span class="dato-label">Valor edificado</span>
+              <span class="dato-valor monto">{{ datos()!.valorEdificado | currency:'ARS':'symbol':'1.2-2' }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
     <!-- ── TAB: Propietarios ──────────────────────────────────────────── -->
     <mat-tab label="Propietarios">
       <div class="tab-content">
@@ -162,7 +239,7 @@ import { TributariaService } from '../../../../core/services/tributaria.service'
 </mat-dialog-actions>`,
   styles: [`
     h2[mat-dialog-title] { display:flex; align-items:center; gap:8px; font-size:18px; mat-icon { color:var(--color-primary); } }
-    mat-dialog-content { min-width:680px; max-width:900px; max-height:75vh; }
+    mat-dialog-content { min-width:680px; max-width:940px; max-height:75vh; }
     .tab-content { padding:16px 0; }
     .inner-table { width:100%; }
     .empty { color:#94a3b8; font-size:13px; text-align:center; padding:20px 0; }
@@ -171,6 +248,13 @@ import { TributariaService } from '../../../../core/services/tributaria.service'
                border-radius:4px; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:4px;
                &:disabled { opacity:.55; cursor:not-allowed; } }
     .msg-err { background:#fef2f2; color:#b91c1c; padding:8px 12px; border-radius:4px; font-size:13px; margin-top:8px; }
+    .datos-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+    .dato-item { display:flex; flex-direction:column; padding:10px 12px; border-bottom:1px solid #f1f5f9; }
+    .dato-item.dato-full { grid-column:1/-1; }
+    .dato-label { font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:.4px; margin-bottom:2px; }
+    .dato-valor { font-size:14px; color:#1e293b; font-weight:500; }
+    .dato-valor.monto { color:var(--color-primary); font-weight:600; }
+    .separator { grid-column:1/-1; height:1px; background:#e2e8f0; margin:4px 0; }
   `],
 })
 export class CatastroDetalleDialogComponent implements OnInit {
@@ -179,6 +263,10 @@ export class CatastroDetalleDialogComponent implements OnInit {
   data: { idBien: string; claveBien: string } = inject(MAT_DIALOG_DATA);
 
   anoActual = new Date().getFullYear().toString();
+
+  // ── Datos del inmueble ────────────────────────────────────────────────
+  datos       = signal<any>(null);
+  loadingDatos = signal(false);
 
   // ── Propietarios ──────────────────────────────────────────────────────
   propietarios = signal<any[]>([]);
@@ -207,8 +295,17 @@ export class CatastroDetalleDialogComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.cargarDatos();
     this.cargarPropietarios();
     this.cargarMejoras();
+  }
+
+  cargarDatos() {
+    this.loadingDatos.set(true);
+    this.svc.catastroDetalle(this.data.idBien).subscribe({
+      next: d => { this.datos.set(d); this.loadingDatos.set(false); },
+      error: () => this.loadingDatos.set(false),
+    });
   }
 
   cargarPropietarios() {

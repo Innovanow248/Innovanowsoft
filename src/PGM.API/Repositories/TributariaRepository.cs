@@ -633,6 +633,41 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
             "DELETE FROM RT_CATASTRO_MEJORAS WHERE CLAVE = @Clave", new { Clave = clave });
     }
 
+    // ── DETALLE CATASTRO ──────────────────────────────────────────────────
+
+    public async Task<CatastroDetalle?> ObtenerCatastroDetalle(string idBien)
+    {
+        using var conn = db.Create();
+        return await conn.QueryFirstOrDefaultAsync<CatastroDetalle>("""
+            SELECT
+                RTRIM(pb.ID_BIEN)                             AS IdBien,
+                RTRIM(ISNULL(pb.CLAVE_BIEN,''))               AS ClaveBien,
+                RTRIM(ISNULL(pbc.CLAVE_BIEN,''))              AS NomenclaturaCatastral,
+                RTRIM(ISNULL(c.NRO_RENTA,''))                 AS NroRenta,
+                RTRIM(ISNULL(c.CALLE_NOCOD,''))               AS Calle,
+                RTRIM(ISNULL(c.NUMERACION_CALLE,''))          AS NumeracionCalle,
+                RTRIM(ISNULL(c.BARRIO,''))                    AS Barrio,
+                RTRIM(ISNULL(c.DESIGNACION_OFICIAL,''))       AS DesignacionOficial,
+                RTRIM(ISNULL(c.NRO_MATRICULA_FOLIO_REAL,''))  AS NroMatricula,
+                ISNULL(c.SUPERFICIE_TERRENO, 0)               AS SuperficieTerreno,
+                ISNULL(c.METROS_FRENTE, 0)                    AS MetrosFrente,
+                RTRIM(ISNULL(c.BALDIO_EDIFICADO,''))          AS BaldioEdificado,
+                RTRIM(ISNULL(c.ESQUINA_MEDIAL,''))            AS EsquinaMedial,
+                ISNULL(c.BASE_IMPONIBLE, 0)                   AS BaseImponible,
+                ISNULL(c.TASACION_TERRENO, 0)                 AS TasacionTerreno,
+                ISNULL(c.VALOR_TERRENO, 0)                    AS ValorTerreno,
+                ISNULL(c.VALOR_EDIFICADO, 0)                  AS ValorEdificado,
+                c.UNIDADES_LOCATIVAS                          AS UnidadesLocativas,
+                RTRIM(ISNULL(c.CODIGO_POSTAL_AUXILIAR,''))    AS CodigoPostal
+            FROM RT_PADRON_BASE pb
+            JOIN RT_SERV_PROPIEDAD sp  ON RTRIM(sp.ID_SERVICIO_PROPIEDAD) = RTRIM(pb.ID_BIEN)
+            JOIN RT_CATASTRO c         ON RTRIM(c.ID_CATASTRO) = RTRIM(sp.ID_CATASTRO)
+            LEFT JOIN RT_PADRON_BASE pbc ON RTRIM(pbc.ID_BIEN) = RTRIM(sp.ID_CATASTRO)
+                                        AND RTRIM(pbc.TIPO_BIEN) = 'CACA'
+            WHERE RTRIM(pb.ID_BIEN) = @IdBien
+            """, new { IdBien = idBien });
+    }
+
     // ── VARIABLES PARAMÉTRICAS ────────────────────────────────────────────
 
     public async Task<List<VariablePadron>> ObtenerVariables(string idBien)

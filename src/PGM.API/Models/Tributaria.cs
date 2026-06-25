@@ -179,6 +179,29 @@ public class VariablePadron
     public string?  TipoVarios   { get; set; }
 }
 
+public class CatastroDetalle
+{
+    public string  IdBien                { get; set; } = "";
+    public string? ClaveBien             { get; set; }
+    public string? NomenclaturaCatastral { get; set; }
+    public string? NroRenta              { get; set; }
+    public string? Calle                 { get; set; }
+    public string? NumeracionCalle       { get; set; }
+    public string? Barrio                { get; set; }
+    public string? DesignacionOficial    { get; set; }
+    public string? NroMatricula          { get; set; }
+    public decimal SuperficieTerreno     { get; set; }
+    public decimal MetrosFrente          { get; set; }
+    public string? BaldioEdificado       { get; set; }
+    public string? EsquinaMedial         { get; set; }
+    public decimal BaseImponible         { get; set; }
+    public decimal TasacionTerreno       { get; set; }
+    public decimal ValorTerreno          { get; set; }
+    public decimal ValorEdificado        { get; set; }
+    public int?    UnidadesLocativas     { get; set; }
+    public string? CodigoPostal          { get; set; }
+}
+
 public class AltaComercioRequest
 {
     public string? Clasificacion           { get; set; }

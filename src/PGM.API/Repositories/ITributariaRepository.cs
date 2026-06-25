@@ -49,4 +49,7 @@ public interface ITributariaRepository
 
     // Inmueble — Variables
     Task<List<VariablePadron>> ObtenerVariables(string idBien);
+
+    // Inmueble — Detalle catastro
+    Task<CatastroDetalle?> ObtenerCatastroDetalle(string idBien);
 }

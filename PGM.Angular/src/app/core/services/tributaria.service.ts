@@ -228,4 +228,8 @@ export class TributariaService {
   variables(idBien: string) {
     return this.http.get<any[]>(`${this.base}/padron/${idBien}/variables`);
   }
+
+  catastroDetalle(idBien: string) {
+    return this.http.get<any>(`${this.base}/catastro/${idBien}/detalle`);
+  }
 }

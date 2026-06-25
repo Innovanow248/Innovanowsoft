@@ -267,4 +267,14 @@ public class TributariaController(
     [HttpGet("padron/{idBien}/variables")]
     public async Task<IActionResult> ObtenerVariables(string idBien)
         => Ok(await tributariaRepo.ObtenerVariables(idBien));
+
+    // ── DETALLE CATASTRO ────────────────────────────────────────────────────
+
+    [HttpGet("catastro/{idBien}/detalle")]
+    public async Task<IActionResult> ObtenerCatastroDetalle(string idBien)
+    {
+        var result = await tributariaRepo.ObtenerCatastroDetalle(idBien);
+        if (result is null) return NotFound();
+        return Ok(result);
+    }
 }
