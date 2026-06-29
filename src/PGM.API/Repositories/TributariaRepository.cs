@@ -638,33 +638,42 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
     public async Task<CatastroDetalle?> ObtenerCatastroDetalle(string idBien)
     {
         using var conn = db.Create();
+        // Soporta dos rutas:
+        //   CACA: ID_BIEN = ID_CATASTRO directamente (catastro propiamente dicho)
+        //   ININ: ID_BIEN → RT_SERV_PROPIEDAD → ID_CATASTRO (tasa por servicio a la propiedad)
         return await conn.QueryFirstOrDefaultAsync<CatastroDetalle>("""
             SELECT
                 RTRIM(pb.ID_BIEN)                             AS IdBien,
                 RTRIM(ISNULL(pb.CLAVE_BIEN,''))               AS ClaveBien,
-                RTRIM(ISNULL(pbc.CLAVE_BIEN,''))              AS NomenclaturaCatastral,
-                RTRIM(ISNULL(c.NRO_RENTA,''))                 AS NroRenta,
-                RTRIM(ISNULL(c.CALLE_NOCOD,''))               AS Calle,
-                RTRIM(ISNULL(c.NUMERACION_CALLE,''))          AS NumeracionCalle,
-                RTRIM(ISNULL(c.BARRIO,''))                    AS Barrio,
-                RTRIM(ISNULL(c.DESIGNACION_OFICIAL,''))       AS DesignacionOficial,
-                RTRIM(ISNULL(c.NRO_MATRICULA_FOLIO_REAL,''))  AS NroMatricula,
-                ISNULL(c.SUPERFICIE_TERRENO, 0)               AS SuperficieTerreno,
-                ISNULL(c.METROS_FRENTE, 0)                    AS MetrosFrente,
-                RTRIM(ISNULL(c.BALDIO_EDIFICADO,''))          AS BaldioEdificado,
-                RTRIM(ISNULL(c.ESQUINA_MEDIAL,''))            AS EsquinaMedial,
-                ISNULL(c.BASE_IMPONIBLE, 0)                   AS BaseImponible,
-                ISNULL(c.TASACION_TERRENO, 0)                 AS TasacionTerreno,
-                ISNULL(c.VALOR_TERRENO, 0)                    AS ValorTerreno,
-                ISNULL(c.VALOR_EDIFICADO, 0)                  AS ValorEdificado,
-                c.UNIDADES_LOCATIVAS                          AS UnidadesLocativas,
-                RTRIM(ISNULL(c.CODIGO_POSTAL_AUXILIAR,''))    AS CodigoPostal
+                CASE
+                    WHEN c_caca.ID_CATASTRO IS NOT NULL
+                        THEN RTRIM(ISNULL(pb.CLAVE_BIEN,''))
+                    ELSE RTRIM(ISNULL(pbc.CLAVE_BIEN,''))
+                END                                           AS NomenclaturaCatastral,
+                RTRIM(ISNULL(COALESCE(c_caca.NRO_RENTA,             c_inin.NRO_RENTA),            '')) AS NroRenta,
+                RTRIM(ISNULL(COALESCE(c_caca.CALLE_NOCOD,           c_inin.CALLE_NOCOD),          '')) AS Calle,
+                RTRIM(ISNULL(COALESCE(c_caca.NUMERACION_CALLE,      c_inin.NUMERACION_CALLE),     '')) AS NumeracionCalle,
+                RTRIM(ISNULL(COALESCE(c_caca.BARRIO,                c_inin.BARRIO),               '')) AS Barrio,
+                RTRIM(ISNULL(COALESCE(c_caca.DESIGNACION_OFICIAL,   c_inin.DESIGNACION_OFICIAL),  '')) AS DesignacionOficial,
+                RTRIM(ISNULL(COALESCE(c_caca.NRO_MATRICULA_FOLIO_REAL, c_inin.NRO_MATRICULA_FOLIO_REAL), '')) AS NroMatricula,
+                ISNULL(COALESCE(c_caca.SUPERFICIE_TERRENO,   c_inin.SUPERFICIE_TERRENO),  0) AS SuperficieTerreno,
+                ISNULL(COALESCE(c_caca.METROS_FRENTE,        c_inin.METROS_FRENTE),       0) AS MetrosFrente,
+                RTRIM(ISNULL(COALESCE(c_caca.BALDIO_EDIFICADO,  c_inin.BALDIO_EDIFICADO), '')) AS BaldioEdificado,
+                RTRIM(ISNULL(COALESCE(c_caca.ESQUINA_MEDIAL,    c_inin.ESQUINA_MEDIAL),   '')) AS EsquinaMedial,
+                ISNULL(COALESCE(c_caca.BASE_IMPONIBLE,       c_inin.BASE_IMPONIBLE),      0) AS BaseImponible,
+                ISNULL(COALESCE(c_caca.TASACION_TERRENO,     c_inin.TASACION_TERRENO),    0) AS TasacionTerreno,
+                ISNULL(COALESCE(c_caca.VALOR_TERRENO,        c_inin.VALOR_TERRENO),       0) AS ValorTerreno,
+                ISNULL(COALESCE(c_caca.VALOR_EDIFICADO,      c_inin.VALOR_EDIFICADO),     0) AS ValorEdificado,
+                COALESCE(c_caca.UNIDADES_LOCATIVAS,          c_inin.UNIDADES_LOCATIVAS)       AS UnidadesLocativas,
+                RTRIM(ISNULL(COALESCE(c_caca.CODIGO_POSTAL_AUXILIAR, c_inin.CODIGO_POSTAL_AUXILIAR), '')) AS CodigoPostal
             FROM RT_PADRON_BASE pb
-            JOIN RT_SERV_PROPIEDAD sp  ON RTRIM(sp.ID_SERVICIO_PROPIEDAD) = RTRIM(pb.ID_BIEN)
-            JOIN RT_CATASTRO c         ON RTRIM(c.ID_CATASTRO) = RTRIM(sp.ID_CATASTRO)
-            LEFT JOIN RT_PADRON_BASE pbc ON RTRIM(pbc.ID_BIEN) = RTRIM(sp.ID_CATASTRO)
-                                        AND RTRIM(pbc.TIPO_BIEN) = 'CACA'
+            LEFT JOIN RT_CATASTRO c_caca   ON RTRIM(c_caca.ID_CATASTRO)       = RTRIM(pb.ID_BIEN)
+            LEFT JOIN RT_SERV_PROPIEDAD sp ON RTRIM(sp.ID_SERVICIO_PROPIEDAD) = RTRIM(pb.ID_BIEN)
+            LEFT JOIN RT_CATASTRO c_inin   ON RTRIM(c_inin.ID_CATASTRO)       = RTRIM(sp.ID_CATASTRO)
+            LEFT JOIN RT_PADRON_BASE pbc   ON RTRIM(pbc.ID_BIEN)              = RTRIM(sp.ID_CATASTRO)
+                                          AND RTRIM(pbc.TIPO_BIEN)            = 'CACA'
             WHERE RTRIM(pb.ID_BIEN) = @IdBien
+              AND (c_caca.ID_CATASTRO IS NOT NULL OR c_inin.ID_CATASTRO IS NOT NULL)
             """, new { IdBien = idBien });
     }
 
