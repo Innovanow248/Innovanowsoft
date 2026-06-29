@@ -72,6 +72,7 @@ public class TributariaController(
     public async Task<IActionResult> BuscarContribuyente([FromQuery] string? cuit,
                                                          [FromQuery] string? documento,
                                                          [FromQuery] string? apellido,
+                                                         [FromQuery] string? id,
                                                          [FromQuery] string? tipoBien)
     {
         string? identificador = null;
@@ -85,6 +86,10 @@ public class TributariaController(
         {
             var p = await personaRepo.BuscarPorDocumento(documento);
             identificador = p?.Identificador;
+        }
+        else if (!string.IsNullOrWhiteSpace(id))
+        {
+            identificador = id;
         }
         else if (!string.IsNullOrWhiteSpace(apellido))
         {

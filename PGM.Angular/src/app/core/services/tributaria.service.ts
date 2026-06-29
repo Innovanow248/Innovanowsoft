@@ -84,7 +84,7 @@ export class TributariaService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/tributaria`;
 
-  buscar(params: { cuit?: string; documento?: string; apellido?: string; tipoBien?: string }) {
+  buscar(params: { cuit?: string; documento?: string; apellido?: string; id?: string; tipoBien?: string }) {
     return this.http.get<any>(`${this.base}/buscar`, { params: params as any });
   }
 

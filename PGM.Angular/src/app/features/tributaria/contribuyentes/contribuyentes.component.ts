@@ -120,7 +120,7 @@ export class ContribuyentesComponent {
   seleccionar(persona: Persona) {
     this.seleccionado.set(persona);
     this.detalleDeuda.set([]);
-    this.svc.buscar({ cuit: persona.cuitCuil }).subscribe({
+    this.svc.buscar({ id: persona.identificador }).subscribe({
       next: (r) => this.resultado.set(r),
       error: () => {},
     });
