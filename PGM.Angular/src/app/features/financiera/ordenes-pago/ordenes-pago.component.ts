@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe, DatePipe, NgFor } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -165,6 +166,7 @@ export class OrdenesPagoComponent implements OnInit {
   private svc    = inject(FinancieraService);
   private fb     = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private router = inject(Router);
 
   anoActual = new Date().getFullYear().toString();
   form = this.fb.nonNullable.group({ ano: [this.anoActual], estado: [''] });
@@ -175,7 +177,7 @@ export class OrdenesPagoComponent implements OnInit {
   page     = signal(0);
   pageSize = signal(100);
 
-  cols = ['nroOpago','proveedor','cuitCuil','estadoOpago','montoAPagar','montoPagado','fechaAprobacion','accion'];
+  cols = ['nroOpago','proveedor','cuitCuil','estadoOpago','montoAPagar','montoPagado','fechaAprobacion','detalle','accion'];
 
   totalAPagar = computed(() => this.ordenes().reduce((a, o) => a + o.montoAPagar, 0));
   totalPagado = computed(() => this.ordenes().reduce((a, o) => a + o.montoPagado, 0));
@@ -218,6 +220,13 @@ export class OrdenesPagoComponent implements OnInit {
     const ano = this.form.value.ano ?? this.anoActual;
     this.dialog.open(NuevaOPDialogComponent, { data: { ano }, width: '520px', maxWidth: '95vw' })
       .afterClosed().subscribe(ok => { if (ok) this.cargar(); });
+  }
+
+  verDetalle(o: OrdenPago) {
+    this.router.navigate(
+      ['/financiera/ordenes-pago', o.tipoOpago, o.anoOpago, o.nroOpago],
+      { state: { op: o } }
+    );
   }
 
   cambiarEstado(o: OrdenPago, estado: string) {

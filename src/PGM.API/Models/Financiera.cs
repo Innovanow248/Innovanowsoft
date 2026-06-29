@@ -86,6 +86,18 @@ public record NuevaFacturaRequest(
 
 public record AjustePresupuestoRequest(decimal NuevoMonto);
 
+public class CuentaIngreso
+{
+    public string  AnoIng               { get; set; } = "";
+    public string  NroCtaIng            { get; set; } = "";
+    public string  TipoCtaIng           { get; set; } = "";
+    public string  Designacion          { get; set; } = "";
+    public decimal PresupuestoAutorizado { get; set; }
+    public decimal MontoCobrado         { get; set; }
+    public decimal MontoDevengado       { get; set; }
+    public decimal Diferencia           => PresupuestoAutorizado - MontoCobrado;
+}
+
 public class PagedResult<T>
 {
     public List<T> Items { get; set; } = new();

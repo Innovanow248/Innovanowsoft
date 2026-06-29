@@ -31,8 +31,10 @@ public interface ITributariaRepository
     Task EliminarTasa(string interes, DateTime fecha);
 
     // Referencia — Valuación Automotores
-    Task<List<ValuacionAutomotor>> ObtenerValuacionAutomotores(string? anoValuacion);
+    Task<List<ValuacionAutomotor>> ObtenerValuacionAutomotores(string? anoValuacion, string? marca, string? modelo);
     Task<List<string>> ObtenerAnosValuacion();
+    Task<List<string>> ObtenerMarcasAutomotores(string ano);
+    Task<List<string>> ObtenerModelosAutomotores(string ano, string marca);
     Task CrearValuacion(ValuacionAutomotor val);
     Task ActualizarValuacion(ValuacionAutomotor val);
     Task EliminarValuacion(string ano, string cip, int modelo);

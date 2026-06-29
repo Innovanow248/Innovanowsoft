@@ -49,12 +49,15 @@ public class PersonaRepository(DbConnectionFactory db) : IPersonaRepository
             new { Documento = documento });
     }
 
-    public async Task<List<Persona>> BuscarPorApellido(string apellido)
+    public async Task<List<Persona>> BuscarPorApellido(string apellido, string? tipoBien = null)
     {
         using var conn = db.Create();
+        var whereExtra = string.IsNullOrWhiteSpace(tipoBien)
+            ? ""
+            : " AND RTRIM(IDENTIFICADOR) IN (SELECT RTRIM(IDENTIFICADOR) FROM RT_PADRON_BASE WHERE RTRIM(TIPO_BIEN) = @TipoBien)";
         var result = await conn.QueryAsync<Persona>(
-            SelectBase + " WHERE APELLIDO LIKE @Apellido ORDER BY APELLIDO, NOMBRE",
-            new { Apellido = apellido.ToUpper() + "%" });
+            SelectBase + $" WHERE APELLIDO LIKE @Apellido{whereExtra} ORDER BY APELLIDO, NOMBRE",
+            new { Apellido = apellido.ToUpper() + "%", TipoBien = tipoBien?.ToUpper() });
         return result.ToList();
     }
 

@@ -24,12 +24,15 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
                 ISNULL(pb.MONTO_DEUDA_HISTORICO,0)       AS MontDeudaHistorico,
                 ISNULL(pb.MONTO_DEUDA_ACTUALIZADO,0)     AS MontoDeudaActualizado,
                 NULLIF(RTRIM(ISNULL(a.DESCRIPCION_INDIVIDUAL, ISNULL(a.MARCA_VEHICULO,''))), '') AS Descripcion,
+                NULLIF(RTRIM(ISNULL(ci.NOMBRE_FANTASIA,'')), '')                               AS NombreFantasia,
                 CASE WHEN pb.ACTIVO = '0'
                      THEN COALESCE(pb.FECHA_BAJA, pb.LIQ_HASTA)
                      ELSE NULL END                           AS FechaBaja
             FROM RT_PADRON_BASE pb
-            LEFT JOIN RT_AUTOMOTORES a ON RTRIM(a.ID_AUTOMOTOR) = RTRIM(pb.ID_BIEN)
-                                      AND RTRIM(pb.TIPO_BIEN) = 'AUAU'
+            LEFT JOIN RT_AUTOMOTORES a        ON RTRIM(a.ID_AUTOMOTOR)           = RTRIM(pb.ID_BIEN)
+                                             AND RTRIM(pb.TIPO_BIEN) = 'AUAU'
+            LEFT JOIN RT_COMERCIO_INDUSTRIA ci ON RTRIM(ci.ID_COMERCIO_INDUSTRIA) = RTRIM(pb.ID_BIEN)
+                                              AND RTRIM(pb.TIPO_BIEN) = 'CICI'
             WHERE RTRIM(pb.IDENTIFICADOR) = @Identificador
             ORDER BY pb.TIPO_BIEN
             """, new { Identificador = identificador });
@@ -451,22 +454,71 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
         return result.ToList();
     }
 
-    public async Task<List<ValuacionAutomotor>> ObtenerValuacionAutomotores(string? anoValuacion)
+    public async Task<List<ValuacionAutomotor>> ObtenerValuacionAutomotores(
+        string? anoValuacion, string? marca, string? modelo)
     {
         using var conn = db.Create();
-        var where = string.IsNullOrWhiteSpace(anoValuacion) ? "" : "WHERE RTRIM(av.ANO_VALUACION) = @Ano";
+        var where = new List<string>();
+        if (!string.IsNullOrWhiteSpace(anoValuacion)) where.Add("RTRIM(av.ANO_VALUACION) = @Ano");
+        if (!string.IsNullOrWhiteSpace(modelo))       where.Add("RTRIM(t.MARCA_VEHICULO) = @Modelo");
+        else if (!string.IsNullOrWhiteSpace(marca))   where.Add(
+            "(RTRIM(t.MARCA_VEHICULO) = @Marca OR RTRIM(t.MARCA_VEHICULO) LIKE @MarcaLike)");
+        var whereClause = where.Count > 0 ? "WHERE " + string.Join(" AND ", where) : "";
+
         var result = await conn.QueryAsync<ValuacionAutomotor>($"""
             SELECT
-                RTRIM(av.ANO_VALUACION)  AS AnoValuacion,
-                RTRIM(av.CIP)            AS Cip,
-                av.MODELO_VALUACION      AS ModeloValuacion,
-                ISNULL(av.BASE_IMPONIBLE,0) AS BaseImponible,
-                ISNULL(ta.ALICUOTA,0)    AS Alicuota
+                RTRIM(av.ANO_VALUACION)       AS AnoValuacion,
+                RTRIM(av.CIP)                 AS Cip,
+                av.MODELO_VALUACION           AS ModeloValuacion,
+                ISNULL(av.BASE_IMPONIBLE,0)   AS BaseImponible,
+                ISNULL(ta.ALICUOTA,0)         AS Alicuota,
+                RTRIM(t.MARCA_VEHICULO)       AS MarcaVehiculo
             FROM RT_AUTOMOTORES_VALUACION av
             LEFT JOIN RT_AUTOMOTORES_TARIFARIA ta ON RTRIM(ta.ANO_VALUACION) = RTRIM(av.ANO_VALUACION)
-            {where}
-            ORDER BY av.ANO_VALUACION DESC, av.CIP
-            """, new { Ano = anoValuacion });
+            LEFT JOIN RT_AUTOMOTORES_TIPOS t      ON RTRIM(t.CIP) = RTRIM(av.CIP)
+                                                 AND RTRIM(t.ANO_VALUACION) = RTRIM(av.ANO_VALUACION)
+            {whereClause}
+            ORDER BY av.ANO_VALUACION DESC, t.MARCA_VEHICULO, av.CIP
+            """, new
+        {
+            Ano       = anoValuacion,
+            Marca     = marca?.Trim(),
+            MarcaLike = marca?.Trim() + " %",
+            Modelo    = modelo?.Trim(),
+        });
+        return result.ToList();
+    }
+
+    public async Task<List<string>> ObtenerMarcasAutomotores(string ano)
+    {
+        using var conn = db.Create();
+        var result = await conn.QueryAsync<string>("""
+            SELECT DISTINCT
+                LEFT(RTRIM(t.MARCA_VEHICULO),
+                     CHARINDEX(' ', RTRIM(t.MARCA_VEHICULO) + ' ') - 1) AS Marca
+            FROM RT_AUTOMOTORES_VALUACION v
+            JOIN RT_AUTOMOTORES_TIPOS t ON RTRIM(t.CIP) = RTRIM(v.CIP)
+                                       AND RTRIM(t.ANO_VALUACION) = RTRIM(v.ANO_VALUACION)
+            WHERE RTRIM(v.ANO_VALUACION) = @Ano
+              AND t.MARCA_VEHICULO IS NOT NULL
+              AND RTRIM(t.MARCA_VEHICULO) <> ''
+            ORDER BY Marca
+            """, new { Ano = ano });
+        return result.ToList();
+    }
+
+    public async Task<List<string>> ObtenerModelosAutomotores(string ano, string marca)
+    {
+        using var conn = db.Create();
+        var result = await conn.QueryAsync<string>("""
+            SELECT DISTINCT RTRIM(t.MARCA_VEHICULO) AS Modelo
+            FROM RT_AUTOMOTORES_VALUACION v
+            JOIN RT_AUTOMOTORES_TIPOS t ON RTRIM(t.CIP) = RTRIM(v.CIP)
+                                       AND RTRIM(t.ANO_VALUACION) = RTRIM(v.ANO_VALUACION)
+            WHERE RTRIM(v.ANO_VALUACION) = @Ano
+              AND (RTRIM(t.MARCA_VEHICULO) = @Marca OR RTRIM(t.MARCA_VEHICULO) LIKE @MarcaLike)
+            ORDER BY Modelo
+            """, new { Ano = ano, Marca = marca.Trim(), MarcaLike = marca.Trim() + " %" });
         return result.ToList();
     }
 
@@ -578,6 +630,11 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
     {
         using var conn = db.Create();
         var result = await conn.QueryAsync<MejoraInmueble>("""
+            DECLARE @idCat CHAR(5)
+            SELECT @idCat = ISNULL(
+                (SELECT RTRIM(sp.ID_CATASTRO) FROM RT_SERV_PROPIEDAD sp
+                 WHERE RTRIM(sp.ID_SERVICIO_PROPIEDAD) = @IdBien),
+                @IdBien)
             SELECT
                 CLAVE,
                 FECHA_MEJORA                                    AS FechaMejora,
@@ -590,9 +647,9 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
                 RTRIM(ISNULL(TIPO_DESTINO_CATASTRO,''))         AS TipoDestinoCatastro,
                 RTRIM(ISNULL(TIPO_CONSTRUCCION,''))             AS TipoConstruccion
             FROM RT_CATASTRO_MEJORAS
-            WHERE RTRIM(ID_CATASTRO) = @IdCatastro
+            WHERE RTRIM(ID_CATASTRO) = @idCat
             ORDER BY CLAVE
-            """, new { IdCatastro = idCatastro });
+            """, new { IdBien = idCatastro });
         return result.ToList();
     }
 
@@ -600,8 +657,13 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
     {
         using var conn = db.Create();
         return await conn.ExecuteScalarAsync<int>("""
+            DECLARE @idCat CHAR(5)
+            SELECT @idCat = ISNULL(
+                (SELECT RTRIM(sp.ID_CATASTRO) FROM RT_SERV_PROPIEDAD sp
+                 WHERE RTRIM(sp.ID_SERVICIO_PROPIEDAD) = @IdBien),
+                @IdBien)
             DECLARE @clave INT
-            SELECT @clave = ISNULL(MAX(CLAVE),0)+1 FROM RT_CATASTRO_MEJORAS WHERE RTRIM(ID_CATASTRO) = @IdCat
+            SELECT @clave = ISNULL(MAX(CLAVE),0)+1 FROM RT_CATASTRO_MEJORAS WHERE RTRIM(ID_CATASTRO) = @idCat
             INSERT INTO RT_CATASTRO_MEJORAS
                 (CLAVE, FECHA_MEJORA, ANO_CONSTRUCCION, ESTADO_CONSTRUCCION,
                  SUPERFICIE_CUBIERTA, VALOR_EDIFICADO, ID_CATASTRO,
@@ -609,13 +671,12 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
                  DATO1, DATO2, DATO3, DATO4)
             VALUES
                 (@clave, GETDATE(), @AnoConst, @Estado,
-                 @Sup, @Valor, @IdCatPad,
+                 @Sup, @Valor, @idCat,
                  @CodCat, @TipoDest, @TipoConst,
                  '','','','')
             SELECT @clave
             """, new {
-                IdCat    = idCatastro,
-                IdCatPad = idCatastro.PadRight(5),
+                IdBien   = idCatastro,
                 AnoConst = (req.AnoConstruction ?? DateTime.Today.Year.ToString()).PadRight(4),
                 Estado   = (req.EstadoConstruccion ?? "T").PadLeft(1),
                 Sup      = req.SuperficieCubierta,

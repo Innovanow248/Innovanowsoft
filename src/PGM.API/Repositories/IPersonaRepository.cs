@@ -6,7 +6,7 @@ public interface IPersonaRepository
 {
     Task<Persona?> BuscarPorCuit(string cuitCuil);
     Task<Persona?> BuscarPorDocumento(string documento);
-    Task<List<Persona>> BuscarPorApellido(string apellido);
+    Task<List<Persona>> BuscarPorApellido(string apellido, string? tipoBien = null);
     Task<Persona?> ObtenerPorId(string identificador);
     Task<string> CrearPersona(Persona persona);
     Task ActualizarPersona(Persona persona);

@@ -268,8 +268,9 @@ export class ShellComponent implements OnInit {
       title: 'Administración Financiera',
       icon: 'savings',
       children: [
-        { label: 'Presupuesto',     icon: 'account_balance', route: '/financiera/presupuesto' },
-        { label: 'Compromisos',     icon: 'handshake',       route: '/financiera/compromisos' },
+        { label: 'Presupuesto Gastos',    icon: 'account_balance', route: '/financiera/presupuesto' },
+        { label: 'Presupuesto Ingresos', icon: 'trending_up',     route: '/financiera/presupuesto-ingresos' },
+        { label: 'Compromisos',          icon: 'handshake',        route: '/financiera/compromisos' },
         { label: 'Órdenes de Pago', icon: 'payments',        route: '/financiera/ordenes-pago' },
         { label: 'Facturas',        icon: 'receipt_long',    route: '/financiera/facturas' },
         { label: 'Proveedores',     icon: 'storefront',      route: '/financiera/proveedores' },

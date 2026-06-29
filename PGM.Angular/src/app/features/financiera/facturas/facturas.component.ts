@@ -318,11 +318,12 @@ export class AltaFacturaDialogComponent {
 
   <div class="card filter-card">
     <form [formGroup]="form" (ngSubmit)="cargar()" class="filter-row">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" style="width:100px">
         <mat-label>Año</mat-label>
-        <input matInput formControlName="year" maxlength="4" style="width:80px" />
+        <mat-icon matPrefix>calendar_today</mat-icon>
+        <input matInput formControlName="year" maxlength="4" />
       </mat-form-field>
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" style="width:150px">
         <mat-label>Estado</mat-label>
         <select matNativeControl formControlName="estado">
           <option value="">Todos</option>
@@ -330,6 +331,16 @@ export class AltaFacturaDialogComponent {
           <option value="E">Ejecutado</option>
           <option value="N">Anulado</option>
         </select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" style="flex:1;min-width:180px">
+        <mat-label>Proveedor</mat-label>
+        <mat-icon matPrefix>business</mat-icon>
+        <input matInput formControlName="proveedor" placeholder="Nombre o CUIT" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" style="width:180px">
+        <mat-label>N° Factura</mat-label>
+        <mat-icon matPrefix>receipt</mat-icon>
+        <input matInput formControlName="nroFactura" placeholder="Ej: 0001-00012345" />
       </mat-form-field>
       <button class="btn-action" type="submit" [disabled]="loading()">
         {{ loading() ? 'Cargando…' : 'Buscar' }}
@@ -404,7 +415,12 @@ export class FacturasFinancieraComponent {
   private dialog = inject(MatDialog);
 
   anoActual = new Date().getFullYear().toString();
-  form      = this.fb.nonNullable.group({ year: [this.anoActual], estado: [''] });
+  form      = this.fb.nonNullable.group({
+    year:       [this.anoActual],
+    estado:     [''],
+    proveedor:  [''],
+    nroFactura: [''],
+  });
   loading   = signal(false);
   facturas  = signal<FacturaSAF[]>([]);
 
@@ -412,8 +428,14 @@ export class FacturasFinancieraComponent {
 
   cargar() {
     this.loading.set(true);
-    const { year, estado } = this.form.value;
-    this.svc.facturas(parseInt(year!), undefined, estado || undefined).subscribe({
+    const { year, estado, proveedor, nroFactura } = this.form.value;
+    this.svc.facturas(
+      parseInt(year!),
+      undefined,
+      estado     || undefined,
+      proveedor  || undefined,
+      nroFactura || undefined,
+    ).subscribe({
       next: d => { this.facturas.set(d); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

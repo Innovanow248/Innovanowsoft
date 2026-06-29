@@ -24,6 +24,7 @@ export interface BienPadron {
   situacionDeuda: string;
   montoDeudaActualizado: number;
   descripcion: string | null;
+  nombreFantasia: string | null;
   fechaBaja: string | null;
 }
 
@@ -83,7 +84,7 @@ export class TributariaService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/tributaria`;
 
-  buscar(params: { cuit?: string; documento?: string; apellido?: string }) {
+  buscar(params: { cuit?: string; documento?: string; apellido?: string; tipoBien?: string }) {
     return this.http.get<any>(`${this.base}/buscar`, { params: params as any });
   }
 
@@ -180,9 +181,22 @@ export class TributariaService {
     return this.http.get<string[]>(`${this.base}/referencia/valuacion-automotores/anos`);
   }
 
-  valuacionAutomotores(ano?: string) {
-    const params = ano ? `?ano=${ano}` : '';
-    return this.http.get<any[]>(`${this.base}/referencia/valuacion-automotores${params}`);
+  valuacionAutomotores(ano?: string, marca?: string, modelo?: string) {
+    const p = new URLSearchParams();
+    if (ano)    p.set('ano', ano);
+    if (marca)  p.set('marca', marca);
+    if (modelo) p.set('modelo', modelo);
+    const qs = p.toString() ? '?' + p.toString() : '';
+    return this.http.get<any[]>(`${this.base}/referencia/valuacion-automotores${qs}`);
+  }
+
+  marcasAutomotores(ano: string) {
+    return this.http.get<string[]>(`${this.base}/referencia/valuacion-automotores/marcas?ano=${encodeURIComponent(ano)}`);
+  }
+
+  modelosAutomotores(ano: string, marca: string) {
+    return this.http.get<string[]>(
+      `${this.base}/referencia/valuacion-automotores/modelos?ano=${encodeURIComponent(ano)}&marca=${encodeURIComponent(marca)}`);
   }
 
   crearValuacion(body: any) {

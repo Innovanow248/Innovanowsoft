@@ -110,11 +110,14 @@ export class FinancieroSAFService {
   }
 
   // Compromisos
-  compromisos(ano: string, estado?: string, identificador?: string) {
+  compromisos(ano: string, estado?: string, identificador?: string, page = 0, pageSize = 20, proveedor?: string, nroCompromiso?: string) {
     let p = new HttpParams();
     if (estado)        p = p.set('estado', estado);
     if (identificador) p = p.set('identificador', identificador);
-    return this.http.get<CompromisoSAF[]>(`${API}/compromisos/${ano}`, { params: p });
+    if (proveedor)     p = p.set('proveedor', proveedor);
+    if (nroCompromiso) p = p.set('nroCompromiso', nroCompromiso);
+    p = p.set('page', page.toString()).set('pageSize', pageSize.toString());
+    return this.http.get<{ items: CompromisoSAF[]; total: number }>(`${API}/compromisos/${ano}`, { params: p });
   }
   crearCompromiso(ano: string, body: any) {
     return this.http.post<{ nro: string }>(`${API}/compromisos/${ano}`, body);
@@ -138,11 +141,13 @@ export class FinancieroSAFService {
   }
 
   // Facturas
-  facturas(year?: number, identificador?: string, estado?: string) {
+  facturas(year?: number, identificador?: string, estado?: string, proveedor?: string, nroFactura?: string) {
     let p = new HttpParams();
     if (year)          p = p.set('year', year.toString());
     if (identificador) p = p.set('identificador', identificador);
     if (estado)        p = p.set('estado', estado);
+    if (proveedor)     p = p.set('proveedor', proveedor);
+    if (nroFactura)    p = p.set('nroFactura', nroFactura);
     return this.http.get<FacturaSAF[]>(`${API}/facturas`, { params: p });
   }
   crearFactura(body: any) {

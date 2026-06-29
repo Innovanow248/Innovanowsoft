@@ -71,7 +71,8 @@ public class TributariaController(
     [HttpGet("buscar")]
     public async Task<IActionResult> BuscarContribuyente([FromQuery] string? cuit,
                                                          [FromQuery] string? documento,
-                                                         [FromQuery] string? apellido)
+                                                         [FromQuery] string? apellido,
+                                                         [FromQuery] string? tipoBien)
     {
         string? identificador = null;
 
@@ -87,7 +88,7 @@ public class TributariaController(
         }
         else if (!string.IsNullOrWhiteSpace(apellido))
         {
-            var lista = await personaRepo.BuscarPorApellido(apellido);
+            var lista = await personaRepo.BuscarPorApellido(apellido, tipoBien);
             return Ok(lista);
         }
 
@@ -194,12 +195,21 @@ public class TributariaController(
     // ── REFERENCIA — VALUACIÓN AUTOMOTORES ─────────────────────────────────
 
     [HttpGet("referencia/valuacion-automotores")]
-    public async Task<IActionResult> ObtenerValuacion([FromQuery] string? ano)
-        => Ok(await tributariaRepo.ObtenerValuacionAutomotores(ano));
+    public async Task<IActionResult> ObtenerValuacion(
+        [FromQuery] string? ano, [FromQuery] string? marca, [FromQuery] string? modelo)
+        => Ok(await tributariaRepo.ObtenerValuacionAutomotores(ano, marca, modelo));
 
     [HttpGet("referencia/valuacion-automotores/anos")]
     public async Task<IActionResult> ObtenerAnosValuacion()
         => Ok(await tributariaRepo.ObtenerAnosValuacion());
+
+    [HttpGet("referencia/valuacion-automotores/marcas")]
+    public async Task<IActionResult> ObtenerMarcas([FromQuery] string ano)
+        => Ok(await tributariaRepo.ObtenerMarcasAutomotores(ano));
+
+    [HttpGet("referencia/valuacion-automotores/modelos")]
+    public async Task<IActionResult> ObtenerModelos([FromQuery] string ano, [FromQuery] string marca)
+        => Ok(await tributariaRepo.ObtenerModelosAutomotores(ano, marca));
 
     [HttpPost("referencia/valuacion-automotores")]
     public async Task<IActionResult> CrearValuacion([FromBody] ValuacionAutomotor req)

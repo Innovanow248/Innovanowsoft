@@ -33,11 +33,12 @@ export class AuthService {
     );
   }
 
-  logout() {
+  logout(returnUrl?: string) {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.currentUser.set(null);
-    this.router.navigate(['/login']);
+    const extras = returnUrl ? { queryParams: { returnUrl } } : {};
+    this.router.navigate(['/login'], extras);
   }
 
   getToken()       { return localStorage.getItem(TOKEN_KEY); }

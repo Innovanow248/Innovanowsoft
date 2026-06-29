@@ -26,6 +26,14 @@ public class FinancieraController(IFinancieraRepository repo) : ControllerBase
         return NoContent();
     }
 
+    // GET api/financiera/presupuesto-ingresos/{ano}
+    [HttpGet("presupuesto-ingresos/{ano}")]
+    public async Task<IActionResult> ObtenerPresupuestoIngresos(string ano)
+    {
+        var cuentas = await repo.ObtenerPresupuestoIngresos(ano);
+        return Ok(cuentas);
+    }
+
     // GET api/financiera/ordenes-pago/{ano}?estado=P&page=0&pageSize=100
     [HttpGet("ordenes-pago/{ano}")]
     public async Task<IActionResult> ObtenerOrdenesPago(
@@ -55,6 +63,19 @@ public class FinancieraController(IFinancieraRepository repo) : ControllerBase
         await repo.CambiarEstadoOrdenPago(tipo, ano, nro, req.Estado);
         return NoContent();
     }
+
+    // GET api/financiera/ordenes-pago/{tipo}/{ano}/{nro}
+    [HttpGet("ordenes-pago/{tipo}/{ano}/{nro}")]
+    public async Task<IActionResult> ObtenerOrdenPago(string tipo, string ano, string nro)
+    {
+        var op = await repo.ObtenerOrdenPago(tipo, ano, nro);
+        return op is null ? NotFound() : Ok(op);
+    }
+
+    // GET api/financiera/ordenes-pago/{tipo}/{ano}/{nro}/facturas
+    [HttpGet("ordenes-pago/{tipo}/{ano}/{nro}/facturas")]
+    public async Task<IActionResult> ObtenerFacturasPorOrden(string tipo, string ano, string nro)
+        => Ok(await repo.ObtenerFacturasPorOrden(tipo, ano, nro));
 
     // GET api/financiera/proveedores/{identificador}/facturas
     [HttpGet("proveedores/{identificador}/facturas")]

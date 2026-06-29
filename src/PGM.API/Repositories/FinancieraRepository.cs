@@ -156,4 +156,77 @@ public class FinancieraRepository(DbConnectionFactory db) : IFinancieraRepositor
             WHERE RTRIM(ANO_ERO) = @Ano AND RTRIM(NRO_CTA_ERO) = @Cta
             """, new { Monto = nuevoMonto, Ano = ano, Cta = nroCta });
     }
+
+    public async Task<OrdenPago?> ObtenerOrdenPago(string tipo, string ano, string nro)
+    {
+        using var conn = db.Create();
+        return await conn.QuerySingleOrDefaultAsync<OrdenPago>("""
+            SELECT
+                RTRIM(op.TIPO_OPAGO)    AS TipoOpago,
+                RTRIM(op.ANO_OPAGO)     AS AnoOpago,
+                RTRIM(op.NRO_OPAGO)     AS NroOpago,
+                RTRIM(op.IDENTIFICADOR) AS Identificador,
+                RTRIM(p.APELLIDO) + ', ' + RTRIM(p.NOMBRE) AS Proveedor,
+                RTRIM(p.CUIT_CUIL)      AS CuitCuil,
+                RTRIM(op.ESTADO_OPAGO)  AS EstadoOpago,
+                ISNULL(op.MONTO_APAGAR,0)  AS MontoAPagar,
+                ISNULL(op.MONTO_PAGADO,0)  AS MontoPagado,
+                op.OBSERVACIONES,
+                op.MANDATO_FECHA        AS FechaAprobacion
+            FROM CP_ORDENES_PAGO op
+            JOIN PERSONAS p ON RTRIM(p.IDENTIFICADOR) = RTRIM(op.IDENTIFICADOR)
+            WHERE RTRIM(op.TIPO_OPAGO) = @Tipo
+              AND RTRIM(op.ANO_OPAGO)  = @Ano
+              AND RTRIM(op.NRO_OPAGO)  = @Nro
+            """, new { Tipo = tipo, Ano = ano, Nro = nro });
+    }
+
+    public async Task<List<FacturaCompra>> ObtenerFacturasPorOrden(string tipo, string ano, string nro)
+    {
+        using var conn = db.Create();
+        var result = await conn.QueryAsync<FacturaCompra>("""
+            SELECT
+                RTRIM(f.IDENTIFICADOR)      AS Identificador,
+                RTRIM(p.APELLIDO) + ', ' + RTRIM(p.NOMBRE) AS Proveedor,
+                RTRIM(p.CUIT_CUIL)          AS CuitCuil,
+                RTRIM(f.NRO_FACTURA)        AS NroFactura,
+                RTRIM(f.TIPO_COMPROBANTE)   AS TipoComprobante,
+                RTRIM(f.LETRA_COMPROBANTE)  AS LetraComprobante,
+                f.FECHA,
+                ISNULL(f.TOTAL_FACTURA,0)   AS TotalFactura,
+                ISNULL(f.IC_NETO_GRAVADO1,0) AS NetoGravado,
+                ISNULL(f.IC_IVA1,0)         AS Iva,
+                RTRIM(f.ESTADO)             AS Estado,
+                NULLIF(RTRIM(f.TIPO_OPAGO),'') + '/' +
+                NULLIF(RTRIM(f.ANO_OPAGO),'') + '/' +
+                NULLIF(RTRIM(f.NRO_OPAGO),'') AS OrdenPago
+            FROM CO_FACTURAS_COMPRAS f
+            JOIN PERSONAS p ON RTRIM(p.IDENTIFICADOR) = RTRIM(f.IDENTIFICADOR)
+            WHERE RTRIM(f.TIPO_OPAGO) = @Tipo
+              AND RTRIM(f.ANO_OPAGO)  = @Ano
+              AND RTRIM(f.NRO_OPAGO)  = @Nro
+            ORDER BY f.FECHA DESC
+            """, new { Tipo = tipo, Ano = ano, Nro = nro });
+        return result.ToList();
+    }
+
+    public async Task<List<CuentaIngreso>> ObtenerPresupuestoIngresos(string ano)
+    {
+        using var conn = db.Create();
+        var result = await conn.QueryAsync<CuentaIngreso>("""
+            SELECT
+                RTRIM(ANO_ING)          AS AnoIng,
+                RTRIM(NRO_CTA_ING)      AS NroCtaIng,
+                RTRIM(TIPO_CTA_ING)     AS TipoCtaIng,
+                RTRIM(ISNULL(DESIGNACION,'')) AS Designacion,
+                ISNULL(PRESUPUESTO_AUTORIZADO, 0) AS PresupuestoAutorizado,
+                ISNULL(MONTO_COBRADO_ING, 0)      AS MontoCobrado,
+                ISNULL(MONTO_DEVENGADO, 0)        AS MontoDevengado
+            FROM CP_INGRESO_CUENTAS
+            WHERE RTRIM(ANO_ING) = @Ano
+              AND TIPO_CTA_ING IN ('PI','PT')
+            ORDER BY NRO_CTA_ING
+            """, new { Ano = ano });
+        return result.ToList();
+    }
 }

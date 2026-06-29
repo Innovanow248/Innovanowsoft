@@ -9,6 +9,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { FinancieroSAFService, CompromisoSAF, ProveedorSAF } from '../../../core/services/financiero-saf.service';
 
 // ── Dialog: Detalle Compromiso ────────────────────────────────────────────────
@@ -213,6 +214,7 @@ export class NuevoCompromisoDialogComponent {
     ReactiveFormsModule, FormsModule, CurrencyPipe, DatePipe,
     MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule,
     MatTableModule, MatProgressSpinnerModule, MatDialogModule, MatTooltipModule,
+    MatPaginatorModule,
     NuevoCompromisoDialogComponent,
     DetalleCompromisoDialogComponent,
   ],
@@ -226,11 +228,12 @@ export class NuevoCompromisoDialogComponent {
 
   <div class="card filter-card">
     <form [formGroup]="form" (ngSubmit)="cargar()" class="filter-row">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" style="width:100px">
         <mat-label>Año</mat-label>
-        <input matInput formControlName="ano" maxlength="4" style="width:80px" />
+        <mat-icon matPrefix>calendar_today</mat-icon>
+        <input matInput formControlName="ano" maxlength="4" />
       </mat-form-field>
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" style="width:150px">
         <mat-label>Estado</mat-label>
         <select matNativeControl formControlName="estado">
           <option value="">Todos</option>
@@ -240,15 +243,30 @@ export class NuevoCompromisoDialogComponent {
           <option value="C">Cancelado</option>
         </select>
       </mat-form-field>
+      <mat-form-field appearance="outline" style="flex:1;min-width:180px">
+        <mat-label>Proveedor</mat-label>
+        <mat-icon matPrefix>business</mat-icon>
+        <input matInput formControlName="proveedor" placeholder="Nombre o CUIT" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" style="width:160px">
+        <mat-label>N° Compromiso</mat-label>
+        <mat-icon matPrefix>tag</mat-icon>
+        <input matInput formControlName="nroCompromiso" placeholder="Ej: 123" />
+      </mat-form-field>
       <button class="btn-action" type="submit" [disabled]="loading()">
         {{ loading() ? 'Cargando…' : 'Buscar' }}
       </button>
     </form>
   </div>
 
-  @if (compromisos().length) {
+  @if (compromisos().length || loading()) {
     <div class="card" style="padding:0;overflow:hidden;margin-top:var(--spacing-md)">
-      <div class="card-header"><mat-icon>handshake</mat-icon><span>{{ compromisos().length }} compromisos</span></div>
+      <div class="card-header">
+        <mat-icon>handshake</mat-icon>
+        <span>{{ totalItems() }} compromisos</span>
+        @if (loading()) { <mat-spinner diameter="18" style="margin-left:8px" /> }
+      </div>
+
       <table mat-table [dataSource]="compromisos()">
         <ng-container matColumnDef="nro">
           <th mat-header-cell *matHeaderCellDef>N°</th>
@@ -294,9 +312,17 @@ export class NuevoCompromisoDialogComponent {
         <tr mat-header-row *matHeaderRowDef="cols"></tr>
         <tr mat-row *matRowDef="let row; columns: cols;"></tr>
       </table>
+
+      <mat-paginator
+        [length]="totalItems()"
+        [pageSize]="pageSize"
+        [pageIndex]="page"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
     </div>
   }
-  @if (loading()) { <div style="text-align:center;padding:40px"><mat-spinner diameter="40" /></div> }
 </div>`,
   styles: [`
     .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--spacing-md); }
@@ -315,20 +341,40 @@ export class CompromisosComponent {
   private fb     = inject(FormBuilder);
   private dialog = inject(MatDialog);
 
-  anoActual = new Date().getFullYear().toString();
-  form      = this.fb.nonNullable.group({ ano: [this.anoActual], estado: [''] });
-  loading   = signal(false);
+  anoActual  = new Date().getFullYear().toString();
+  form       = this.fb.nonNullable.group({
+    ano:          [this.anoActual],
+    estado:       [''],
+    proveedor:    [''],
+    nroCompromiso:[''],
+  });
+  loading     = signal(false);
   compromisos = signal<CompromisoSAF[]>([]);
+  totalItems  = signal(0);
+  page        = 0;
+  pageSize    = 20;
 
   cols = ['nro','fecha','proveedor','concepto','monto','estado','accion'];
 
-  cargar() {
+  cargar(resetPage = true) {
+    if (resetPage) this.page = 0;
     this.loading.set(true);
-    const { ano, estado } = this.form.value;
-    this.svc.compromisos(ano!, estado || undefined).subscribe({
-      next: d => { this.compromisos.set(d); this.loading.set(false); },
+    const { ano, estado, proveedor, nroCompromiso } = this.form.value;
+    this.svc.compromisos(
+      ano!, estado || undefined, undefined,
+      this.page, this.pageSize,
+      proveedor      || undefined,
+      nroCompromiso  || undefined,
+    ).subscribe({
+      next: d => { this.compromisos.set(d.items); this.totalItems.set(d.total); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
+  }
+
+  onPageChange(e: PageEvent) {
+    this.page     = e.pageIndex;
+    this.pageSize = e.pageSize;
+    this.cargar(false);
   }
 
   verDetalle(c: CompromisoSAF) {

@@ -80,7 +80,11 @@ export class ContribuyentesComponent {
   }
 
   colsPersonas: string[] = ['identificador','nombre','cuitCuil','documento','localidad','accion'];
-  colsBienes:   string[] = ['tipoBien','claveBien','activo','situacionDeuda','montoDeudaActualizado','fechaBaja','accion'];
+  get colsBienes(): string[] {
+    const base = ['tipoBien','claveBien','activo','situacionDeuda','montoDeudaActualizado','fechaBaja','accion'];
+    if (this.tipoBienesFilter().includes('CICI')) base.splice(2, 0, 'nombreFantasia');
+    return base;
+  }
   colsDeuda:    string[] = ['periodo','tipoBien','claveBien','capitalFacturado','deudaTotalActualizada','imp1Vence','accion'];
   colsResumen:  string[] = ['tipoBien','montoHistorico','montoActualizado'];
 
@@ -94,9 +98,14 @@ export class ContribuyentesComponent {
     this.detalleDeuda.set([]);
 
     const soloDigitos = /^\d+$/.test(val);
-    const params = soloDigitos
-      ? (val.length >= 10 ? { cuit: val } : { documento: val })
-      : { apellido: val };
+    const filtros = this.tipoBienesFilter();
+    let params: { cuit?: string; documento?: string; apellido?: string; tipoBien?: string };
+    if (soloDigitos) {
+      params = val.length >= 10 ? { cuit: val } : { documento: val };
+    } else {
+      params = { apellido: val };
+      if (filtros.length === 1) params.tipoBien = filtros[0];
+    }
 
     this.svc.buscar(params).subscribe({
       next: (r) => {

@@ -15,6 +15,7 @@ public class BienPadron
     public decimal MontDeudaHistorico   { get; set; }
     public decimal MontoDeudaActualizado { get; set; }
     public string? Descripcion           { get; set; }
+    public string? NombreFantasia        { get; set; }
     public DateTime? FechaBaja           { get; set; }
 }
 
@@ -262,4 +263,5 @@ public class ValuacionAutomotor
     public int     ModeloValuacion { get; set; }
     public decimal BaseImponible   { get; set; }
     public decimal Alicuota        { get; set; }
+    public string? MarcaVehiculo   { get; set; }
 }

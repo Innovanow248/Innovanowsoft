@@ -11,4 +11,7 @@ public interface IFinancieraRepository
     Task CambiarEstadoOrdenPago(string tipo, string ano, string nro, string nuevoEstado);
     Task CrearFactura(string identificador, NuevaFacturaRequest req);
     Task AjustarPresupuesto(string ano, string nroCta, decimal nuevoMonto);
+    Task<List<CuentaIngreso>> ObtenerPresupuestoIngresos(string ano);
+    Task<OrdenPago?> ObtenerOrdenPago(string tipo, string ano, string nro);
+    Task<List<FacturaCompra>> ObtenerFacturasPorOrden(string tipo, string ano, string nro);
 }

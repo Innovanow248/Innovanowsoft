@@ -2,6 +2,16 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
+export interface CuentaIngreso {
+  anoIng: string;
+  nroCtaIng: string;
+  tipoCtaIng: string;
+  designacion: string;
+  presupuestoAutorizado: number;
+  montoCobrado: number;
+  montoDevengado: number;
+}
+
 export interface CuentaErogacion {
   anoEro: string;
   nroCtaEro: string;
@@ -77,5 +87,17 @@ export class FinancieraService {
 
   ajustarPresupuesto(ano: string, nroCta: string, nuevoMonto: number) {
     return this.http.put(`${this.base}/presupuesto/${ano}/${nroCta}`, { nuevoMonto });
+  }
+
+  presupuestoIngresos(ano: string) {
+    return this.http.get<CuentaIngreso[]>(`${this.base}/presupuesto-ingresos/${ano}`);
+  }
+
+  ordenPago(tipo: string, ano: string, nro: string) {
+    return this.http.get<OrdenPago>(`${this.base}/ordenes-pago/${tipo}/${ano}/${nro}`);
+  }
+
+  facturasPorOrden(tipo: string, ano: string, nro: string) {
+    return this.http.get<FacturaCompra[]>(`${this.base}/ordenes-pago/${tipo}/${ano}/${nro}/facturas`);
   }
 }
