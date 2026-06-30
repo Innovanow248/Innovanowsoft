@@ -73,7 +73,7 @@ public class TributariaController(
                                                          [FromQuery] string? documento,
                                                          [FromQuery] string? apellido,
                                                          [FromQuery] string? id,
-                                                         [FromQuery] string? tipoBien)
+                                                         [FromQuery] string[]? tipoBienes)
     {
         string? identificador = null;
 
@@ -93,7 +93,7 @@ public class TributariaController(
         }
         else if (!string.IsNullOrWhiteSpace(apellido))
         {
-            var lista = await personaRepo.BuscarPorApellido(apellido, tipoBien);
+            var lista = await personaRepo.BuscarPorApellido(apellido, tipoBienes);
             return Ok(lista);
         }
 
@@ -102,6 +102,11 @@ public class TributariaController(
         var persona = await personaRepo.ObtenerPorId(identificador);
         var resumen = await tributariaRepo.ObtenerResumenDeuda(identificador);
         var bienes  = await tributariaRepo.ObtenerBienesPorPersona(identificador);
+
+        // Si hay filtro por tipo, verificar que el contribuyente tenga al menos un bien del tipo solicitado
+        if (tipoBienes?.Length > 0 &&
+            !bienes.Any(b => tipoBienes.Contains(b.TipoBien?.Trim(), StringComparer.OrdinalIgnoreCase)))
+            return NotFound();
 
         return Ok(new { persona, resumen, bienes });
     }

@@ -99,13 +99,13 @@ export class ContribuyentesComponent {
 
     const soloDigitos = /^\d+$/.test(val);
     const filtros = this.tipoBienesFilter();
-    let params: { cuit?: string; documento?: string; apellido?: string; tipoBien?: string };
+    let params: { cuit?: string; documento?: string; apellido?: string; tipoBienes?: string[] };
     if (soloDigitos) {
       params = val.length >= 10 ? { cuit: val } : { documento: val };
     } else {
       params = { apellido: val };
-      if (filtros.length === 1) params.tipoBien = filtros[0];
     }
+    if (filtros.length > 0) params.tipoBienes = filtros;
 
     this.svc.buscar(params).subscribe({
       next: (r) => {
@@ -120,7 +120,7 @@ export class ContribuyentesComponent {
   seleccionar(persona: Persona) {
     this.seleccionado.set(persona);
     this.detalleDeuda.set([]);
-    this.svc.buscar({ id: persona.identificador }).subscribe({
+    this.svc.buscar({ id: persona.identificador, tipoBienes: undefined }).subscribe({
       next: (r) => this.resultado.set(r),
       error: () => {},
     });

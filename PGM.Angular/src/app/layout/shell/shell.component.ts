@@ -246,7 +246,9 @@ export class ShellComponent implements OnInit {
         { label: 'Deuda',          icon: 'receipt_long',   route: '/tributaria/deuda' },
         { label: 'Planes de Pago', icon: 'event_repeat',   route: '/tributaria/planes-pago' },
         { label: 'Padrón',         icon: 'domain',         route: '/tributaria/padron' },
-        { label: 'Tasas',          icon: 'percent',        route: '/tributaria/referencia/tasas' },
+        { label: 'Caja',           icon: 'point_of_sale',   route: '/tributaria/caja' },
+        { label: 'Cajeros',        icon: 'manage_accounts', route: '/tributaria/cajeros' },
+        { label: 'Tasas',          icon: 'percent',         route: '/tributaria/referencia/tasas' },
         { label: 'Valuación Auto', icon: 'directions_car', route: '/tributaria/referencia/valuacion-automotores' },
         {
           label: 'Parametrización',

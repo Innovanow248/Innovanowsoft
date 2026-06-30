@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
@@ -84,8 +84,14 @@ export class TributariaService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/tributaria`;
 
-  buscar(params: { cuit?: string; documento?: string; apellido?: string; id?: string; tipoBien?: string }) {
-    return this.http.get<any>(`${this.base}/buscar`, { params: params as any });
+  buscar(p: { cuit?: string; documento?: string; apellido?: string; id?: string; tipoBienes?: string[] }) {
+    let params = new HttpParams();
+    if (p.cuit)       params = params.set('cuit',      p.cuit);
+    if (p.documento)  params = params.set('documento', p.documento);
+    if (p.apellido)   params = params.set('apellido',  p.apellido);
+    if (p.id)         params = params.set('id',        p.id);
+    p.tipoBienes?.forEach(t => params = params.append('tipoBienes', t));
+    return this.http.get<any>(`${this.base}/buscar`, { params });
   }
 
   bienes(identificador: string) {

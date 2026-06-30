@@ -33,6 +33,7 @@ export class DashboardComponent {
 
   accesos = [
     { label: 'Contribuyentes',  icon: 'people',          route: '/tributaria/contribuyentes', color: '#3498DB', desc: 'Buscar y gestionar contribuyentes' },
+    { label: 'Caja',            icon: 'point_of_sale',   route: '/tributaria/caja',            color: '#16A085', desc: 'Cobro por ventanilla' },
     { label: 'Deuda',           icon: 'receipt_long',    route: '/tributaria/deuda',           color: '#E74C3C', desc: 'Consulta de deuda tributaria' },
     { label: 'Presupuesto',     icon: 'account_balance', route: '/financiera/presupuesto',     color: '#27AE60', desc: 'Ejecución presupuestaria' },
     { label: 'Órdenes de Pago', icon: 'payments',        route: '/financiera/ordenes-pago',    color: '#9B59B6', desc: 'Gestión de órdenes de pago' },

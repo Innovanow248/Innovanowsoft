@@ -53,27 +53,21 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
                 RTRIM(f.NRO_INTERNO)       AS NroInterno,
                 RTRIM(f.ANO_CUOTA) + '/' + RTRIM(f.NRO_CUOTA) AS Periodo,
                 RTRIM(f.ESTADO_DEUDA)      AS EstadoDeuda,
-                ISNULL(f.CAPITAL_FACTURADO,0)  AS CapitalFacturado,
-                ISNULL(fd.MONTO_ACTUALIZADO_CAPITAL,0)
-                    + ISNULL(fd.MONTO_ACTUALIZADO_INTERESES,0) AS DeudaTotalActualizada,
-                ISNULL(fd.IMP_1VENCE,0)        AS Imp1Vence,
-                fd.FECHA_VENCIMIENTO1          AS FechaVencimiento1,
-                ISNULL(fd.IMP_2VENCE,0)        AS Imp2Vence,
-                fd.FECHA_VENCIMIENTO2          AS FechaVencimiento2,
-                ISNULL(fd.IMP_3VENCE,0)        AS Imp3Vence,
-                fd.FECHA_VENCIMIENTO3          AS FechaVencimiento3
+                ISNULL(f.CAPITAL_FACTURADO, 0) AS CapitalFacturado,
+                ISNULL(f.MONTO_DEUDA_ACTUALIZADO, f.CAPITAL_FACTURADO) AS DeudaTotalActualizada,
+                0              AS Imp1Vence,
+                NULL           AS FechaVencimiento1,
+                0              AS Imp2Vence,
+                NULL           AS FechaVencimiento2,
+                0              AS Imp3Vence,
+                NULL           AS FechaVencimiento3
             FROM PERSONAS p
             JOIN RT_PADRON_BASE pb
                 ON RTRIM(pb.IDENTIFICADOR) = RTRIM(p.IDENTIFICADOR)
             JOIN RT_FACTURAS f
-                ON RTRIM(f.ID_BIEN)   = RTRIM(pb.ID_BIEN)
+                ON RTRIM(f.ID_BIEN)    = RTRIM(pb.ID_BIEN)
                 AND RTRIM(f.TIPO_BIEN) = RTRIM(pb.TIPO_BIEN)
                 AND RTRIM(f.ESTADO_DEUDA) = 'PT'
-            JOIN RT_FACTURAS_DEUDA_DETALLE fdd
-                ON RTRIM(fdd.NRO_INTERNO) = RTRIM(f.NRO_INTERNO)
-            JOIN RT_FACTURAS_DEUDA fd
-                ON RTRIM(fd.NRO_INTERNO_DEUDA) = RTRIM(fdd.NRO_INTERNO_DEUDA)
-                AND RTRIM(fd.ESTADO_DEUDA) = 'LI'
             WHERE RTRIM(p.IDENTIFICADOR) = @Identificador
             ORDER BY pb.TIPO_BIEN, f.ANO_CUOTA, f.NRO_CUOTA
             """, new { Identificador = identificador });
@@ -699,42 +693,53 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
     public async Task<CatastroDetalle?> ObtenerCatastroDetalle(string idBien)
     {
         using var conn = db.Create();
-        // Soporta dos rutas:
-        //   CACA: ID_BIEN = ID_CATASTRO directamente (catastro propiamente dicho)
-        //   ININ: ID_BIEN → RT_SERV_PROPIEDAD → ID_CATASTRO (tasa por servicio a la propiedad)
+        // Tres rutas hacia el catastro:
+        //   CACA : ID_BIEN = ID_CATASTRO (catastro directo)
+        //   ININ : ID_BIEN → RT_SERV_PROPIEDAD.ID_SERVICIO_PROPIEDAD → ID_CATASTRO
+        //   OBSA/OBSC: comparten CLAVE_BIEN con el ININ del mismo titular → misma ruta SP
         return await conn.QueryFirstOrDefaultAsync<CatastroDetalle>("""
             SELECT
                 RTRIM(pb.ID_BIEN)                             AS IdBien,
                 RTRIM(ISNULL(pb.CLAVE_BIEN,''))               AS ClaveBien,
                 CASE
-                    WHEN c_caca.ID_CATASTRO IS NOT NULL
-                        THEN RTRIM(ISNULL(pb.CLAVE_BIEN,''))
-                    ELSE RTRIM(ISNULL(pbc.CLAVE_BIEN,''))
+                    WHEN c_inin.ID_CATASTRO  IS NOT NULL THEN RTRIM(ISNULL(pbc.CLAVE_BIEN,''))
+                    WHEN c_via2.ID_CATASTRO  IS NOT NULL THEN RTRIM(ISNULL(pbc2.CLAVE_BIEN,''))
+                    ELSE                                       RTRIM(ISNULL(pb.CLAVE_BIEN,''))
                 END                                           AS NomenclaturaCatastral,
-                RTRIM(ISNULL(COALESCE(c_caca.NRO_RENTA,             c_inin.NRO_RENTA),            '')) AS NroRenta,
-                RTRIM(ISNULL(COALESCE(c_caca.CALLE_NOCOD,           c_inin.CALLE_NOCOD),          '')) AS Calle,
-                RTRIM(ISNULL(COALESCE(c_caca.NUMERACION_CALLE,      c_inin.NUMERACION_CALLE),     '')) AS NumeracionCalle,
-                RTRIM(ISNULL(COALESCE(c_caca.BARRIO,                c_inin.BARRIO),               '')) AS Barrio,
-                RTRIM(ISNULL(COALESCE(c_caca.DESIGNACION_OFICIAL,   c_inin.DESIGNACION_OFICIAL),  '')) AS DesignacionOficial,
-                RTRIM(ISNULL(COALESCE(c_caca.NRO_MATRICULA_FOLIO_REAL, c_inin.NRO_MATRICULA_FOLIO_REAL), '')) AS NroMatricula,
-                ISNULL(COALESCE(c_caca.SUPERFICIE_TERRENO,   c_inin.SUPERFICIE_TERRENO),  0) AS SuperficieTerreno,
-                ISNULL(COALESCE(c_caca.METROS_FRENTE,        c_inin.METROS_FRENTE),       0) AS MetrosFrente,
-                RTRIM(ISNULL(COALESCE(c_caca.BALDIO_EDIFICADO,  c_inin.BALDIO_EDIFICADO), '')) AS BaldioEdificado,
-                RTRIM(ISNULL(COALESCE(c_caca.ESQUINA_MEDIAL,    c_inin.ESQUINA_MEDIAL),   '')) AS EsquinaMedial,
-                ISNULL(COALESCE(c_caca.BASE_IMPONIBLE,       c_inin.BASE_IMPONIBLE),      0) AS BaseImponible,
-                ISNULL(COALESCE(c_caca.TASACION_TERRENO,     c_inin.TASACION_TERRENO),    0) AS TasacionTerreno,
-                ISNULL(COALESCE(c_caca.VALOR_TERRENO,        c_inin.VALOR_TERRENO),       0) AS ValorTerreno,
-                ISNULL(COALESCE(c_caca.VALOR_EDIFICADO,      c_inin.VALOR_EDIFICADO),     0) AS ValorEdificado,
-                COALESCE(c_caca.UNIDADES_LOCATIVAS,          c_inin.UNIDADES_LOCATIVAS)       AS UnidadesLocativas,
-                RTRIM(ISNULL(COALESCE(c_caca.CODIGO_POSTAL_AUXILIAR, c_inin.CODIGO_POSTAL_AUXILIAR), '')) AS CodigoPostal
+                RTRIM(ISNULL(COALESCE(c_caca.NRO_RENTA,            c_inin.NRO_RENTA,            c_via2.NRO_RENTA),            '')) AS NroRenta,
+                RTRIM(ISNULL(COALESCE(c_caca.CALLE_NOCOD,          c_inin.CALLE_NOCOD,          c_via2.CALLE_NOCOD),          '')) AS Calle,
+                RTRIM(ISNULL(COALESCE(c_caca.NUMERACION_CALLE,     c_inin.NUMERACION_CALLE,     c_via2.NUMERACION_CALLE),     '')) AS NumeracionCalle,
+                RTRIM(ISNULL(COALESCE(c_caca.BARRIO,               c_inin.BARRIO,               c_via2.BARRIO),               '')) AS Barrio,
+                RTRIM(ISNULL(COALESCE(c_caca.DESIGNACION_OFICIAL,  c_inin.DESIGNACION_OFICIAL,  c_via2.DESIGNACION_OFICIAL),  '')) AS DesignacionOficial,
+                RTRIM(ISNULL(COALESCE(c_caca.NRO_MATRICULA_FOLIO_REAL, c_inin.NRO_MATRICULA_FOLIO_REAL, c_via2.NRO_MATRICULA_FOLIO_REAL), '')) AS NroMatricula,
+                ISNULL(COALESCE(c_caca.SUPERFICIE_TERRENO,  c_inin.SUPERFICIE_TERRENO,  c_via2.SUPERFICIE_TERRENO),  0) AS SuperficieTerreno,
+                ISNULL(COALESCE(c_caca.METROS_FRENTE,       c_inin.METROS_FRENTE,       c_via2.METROS_FRENTE),       0) AS MetrosFrente,
+                RTRIM(ISNULL(COALESCE(c_caca.BALDIO_EDIFICADO,  c_inin.BALDIO_EDIFICADO,  c_via2.BALDIO_EDIFICADO), '')) AS BaldioEdificado,
+                RTRIM(ISNULL(COALESCE(c_caca.ESQUINA_MEDIAL,    c_inin.ESQUINA_MEDIAL,    c_via2.ESQUINA_MEDIAL),   '')) AS EsquinaMedial,
+                ISNULL(COALESCE(c_caca.BASE_IMPONIBLE,      c_inin.BASE_IMPONIBLE,      c_via2.BASE_IMPONIBLE),      0) AS BaseImponible,
+                ISNULL(COALESCE(c_caca.TASACION_TERRENO,    c_inin.TASACION_TERRENO,    c_via2.TASACION_TERRENO),    0) AS TasacionTerreno,
+                ISNULL(COALESCE(c_caca.VALOR_TERRENO,       c_inin.VALOR_TERRENO,       c_via2.VALOR_TERRENO),       0) AS ValorTerreno,
+                ISNULL(COALESCE(c_caca.VALOR_EDIFICADO,     c_inin.VALOR_EDIFICADO,     c_via2.VALOR_EDIFICADO),     0) AS ValorEdificado,
+                COALESCE(c_caca.UNIDADES_LOCATIVAS,         c_inin.UNIDADES_LOCATIVAS,  c_via2.UNIDADES_LOCATIVAS)       AS UnidadesLocativas,
+                RTRIM(ISNULL(COALESCE(c_caca.CODIGO_POSTAL_AUXILIAR, c_inin.CODIGO_POSTAL_AUXILIAR, c_via2.CODIGO_POSTAL_AUXILIAR), '')) AS CodigoPostal
             FROM RT_PADRON_BASE pb
-            LEFT JOIN RT_CATASTRO c_caca   ON RTRIM(c_caca.ID_CATASTRO)       = RTRIM(pb.ID_BIEN)
-            LEFT JOIN RT_SERV_PROPIEDAD sp ON RTRIM(sp.ID_SERVICIO_PROPIEDAD) = RTRIM(pb.ID_BIEN)
-            LEFT JOIN RT_CATASTRO c_inin   ON RTRIM(c_inin.ID_CATASTRO)       = RTRIM(sp.ID_CATASTRO)
-            LEFT JOIN RT_PADRON_BASE pbc   ON RTRIM(pbc.ID_BIEN)              = RTRIM(sp.ID_CATASTRO)
-                                          AND RTRIM(pbc.TIPO_BIEN)            = 'CACA'
+            -- ruta CACA directa
+            LEFT JOIN RT_CATASTRO c_caca    ON RTRIM(c_caca.ID_CATASTRO)          = RTRIM(pb.ID_BIEN)
+            -- ruta ININ via RT_SERV_PROPIEDAD
+            LEFT JOIN RT_SERV_PROPIEDAD sp  ON RTRIM(sp.ID_SERVICIO_PROPIEDAD)    = RTRIM(pb.ID_BIEN)
+            LEFT JOIN RT_CATASTRO c_inin    ON RTRIM(c_inin.ID_CATASTRO)           = RTRIM(sp.ID_CATASTRO)
+            LEFT JOIN RT_PADRON_BASE pbc    ON RTRIM(pbc.ID_BIEN)                 = RTRIM(sp.ID_CATASTRO)
+                                           AND RTRIM(pbc.TIPO_BIEN)               = 'CACA'
+            -- ruta OBSA/OBSC: buscar el ININ del mismo titular con igual CLAVE_BIEN
+            LEFT JOIN RT_PADRON_BASE pb2    ON RTRIM(pb2.CLAVE_BIEN)              = RTRIM(pb.CLAVE_BIEN)
+                                           AND RTRIM(pb2.IDENTIFICADOR)           = RTRIM(pb.IDENTIFICADOR)
+                                           AND RTRIM(pb2.TIPO_BIEN)               = 'ININ'
+                                           AND pb2.ID_BIEN                        <> pb.ID_BIEN
+            LEFT JOIN RT_SERV_PROPIEDAD sp2 ON RTRIM(sp2.ID_SERVICIO_PROPIEDAD)  = RTRIM(pb2.ID_BIEN)
+            LEFT JOIN RT_CATASTRO c_via2    ON RTRIM(c_via2.ID_CATASTRO)          = RTRIM(sp2.ID_CATASTRO)
+            LEFT JOIN RT_PADRON_BASE pbc2   ON RTRIM(pbc2.ID_BIEN)               = RTRIM(sp2.ID_CATASTRO)
+                                           AND RTRIM(pbc2.TIPO_BIEN)              = 'CACA'
             WHERE RTRIM(pb.ID_BIEN) = @IdBien
-              AND (c_caca.ID_CATASTRO IS NOT NULL OR c_inin.ID_CATASTRO IS NOT NULL)
             """, new { IdBien = idBien });
     }
 

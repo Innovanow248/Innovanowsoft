@@ -19,6 +19,7 @@ builder.Services.AddScoped<IPersonaRepository, PersonaRepository>();
 builder.Services.AddScoped<ITributariaRepository, TributariaRepository>();
 builder.Services.AddScoped<IFinancieraRepository, FinancieraRepository>();
 builder.Services.AddScoped<IDevengamientoRepository, DevengamientoRepository>();
+builder.Services.AddScoped<ICajaRepository, CajaRepository>();
 
 // ── Servicios ──────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IAuthService, AuthService>();

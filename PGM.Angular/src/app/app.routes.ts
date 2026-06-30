@@ -21,6 +21,8 @@ export const routes: Routes = [
       { path: 'tributaria/padron',            loadComponent: () => import('./features/tributaria/padron/padron.component').then(m => m.PadronComponent) },
       { path: 'tributaria/referencia/tasas', loadComponent: () => import('./features/tributaria/referencia/tasas/tasas.component').then(m => m.TasasComponent) },
       { path: 'tributaria/referencia/valuacion-automotores', loadComponent: () => import('./features/tributaria/referencia/valuacion-automotores/valuacion-automotores.component').then(m => m.ValuacionAutomotoresComponent) },
+      { path: 'tributaria/caja', data: { titulo: 'Caja', botonLabel: '', botonIcono: 'point_of_sale' }, loadComponent: () => import('./features/caja/caja.component').then(m => m.CajaComponent) },
+      { path: 'tributaria/cajeros', data: { titulo: 'Administración de Cajeros', botonLabel: '', botonIcono: 'manage_accounts' }, loadComponent: () => import('./features/caja/cajeros-admin.component').then(m => m.CajerosAdminComponent) },
       { path: 'financiera/presupuesto',          loadComponent: () => import('./features/financiera/presupuesto/presupuesto.component').then(m => m.PresupuestoComponent) },
       { path: 'financiera/presupuesto-ingresos', loadComponent: () => import('./features/financiera/presupuesto-ingresos/presupuesto-ingresos.component').then(m => m.PresupuestoIngresosComponent) },
       { path: 'financiera/compromisos',     loadComponent: () => import('./features/financiera/compromisos/compromisos.component').then(m => m.CompromisosComponent) },

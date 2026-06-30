@@ -1,0 +1,56 @@
+.caja-page { padding: 24px; max-width: 1100px; margin: 0 auto; }
+.sesion-header { display:flex; align-items:center; gap:16px; margin-bottom:24px;
+  h2 { margin:0; font-size:18px; font-weight:600; }
+  .chip { background:#e0f2fe; color:#0369a1; border-radius:12px; padding:2px 12px; font-size:12px; font-weight:600; } }
+.apertura-card { background:#fff; border-radius:12px; padding:40px; text-align:center; border:1px solid #e2e8f0;
+  mat-icon { font-size:64px; width:64px; height:64px; color:#94a3b8; margin-bottom:16px; }
+  h3 { margin:0 0 8px; color:#1e293b; }
+  p { color:#64748b; margin:0 0 24px; } }
+.cobro-layout { display:grid; grid-template-columns:1fr 380px; gap:24px; align-items:start; }
+.panel { background:#fff; border-radius:12px; border:1px solid #e2e8f0; padding:20px; }
+.panel-title { font-size:14px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.5px; margin:0 0 16px; }
+.busqueda-row { display:flex; gap:8px; align-items:flex-start;
+  mat-form-field { flex:1; } }
+.contribuyente-info { background:#f8fafc; border-radius:8px; padding:12px 16px; margin-bottom:12px;
+  .nombre { font-weight:600; font-size:15px; color:#1e293b; }
+  .datos { font-size:12px; color:#64748b; margin-top:2px; } }
+.cuotas-list { display:flex; flex-direction:column; gap:6px; max-height:340px; overflow-y:auto; }
+.cuota-item { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px;
+  background:#f8fafc; border:1px solid #e2e8f0; cursor:pointer; transition:background .15s;
+  &.seleccionada { background:#eff6ff; border-color:#bfdbfe; }
+  .cuota-info { flex:1;
+    .periodo { font-size:13px; font-weight:600; color:#1e293b; }
+    .tipo { font-size:11px; color:#64748b; } }
+  .monto { font-size:14px; font-weight:700; color:#0f172a; } }
+.total-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0;
+  border-top:2px solid #e2e8f0; margin-top:12px;
+  .label { font-weight:600; color:#475569; }
+  .monto { font-size:18px; font-weight:700; color:#1d4ed8; } }
+.formas-pago { display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+.forma-header { display:flex; gap:8px; margin-bottom:8px;
+  button { flex:1; } }
+.forma-row { border:1px solid #e2e8f0; border-radius:8px; padding:12px;
+  .forma-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;
+    .tipo-label { font-size:12px; font-weight:700; text-transform:uppercase; color:#475569; }
+    button { width:24px; height:24px; } }
+  mat-form-field { width:100%; margin-bottom:0; } }
+.diferencia { display:flex; justify-content:space-between; padding:8px 0;
+  font-size:13px; color:#64748b; }
+.cierre-panel { margin-top:24px; background:#fff; border-radius:12px; border:1px solid #e2e8f0; padding:20px; }
+.resumen-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.resumen-item { display:flex; justify-content:space-between; padding:8px 12px; background:#f8fafc; border-radius:6px;
+  .rl { font-size:13px; color:#64748b; }
+  .rv { font-weight:600; color:#1e293b; } }
+.resumen-total { grid-column:1/-1; background:#eff6ff; border-radius:6px; padding:10px 12px;
+  display:flex; justify-content:space-between; font-weight:700; color:#1d4ed8; }
+.msg-ok  { background:#f0fdf4; color:#166534; border-radius:6px; padding:10px 14px; font-size:13px; margin-top:12px; }
+.msg-err { background:#fef2f2; color:#b91c1c; border-radius:6px; padding:10px 14px; font-size:13px; margin-top:12px; }
+.resultados-lista { margin-top:8px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+.resultados-titulo { font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;
+  padding:8px 12px; background:#f8fafc; margin:0; border-bottom:1px solid #e2e8f0; }
+.resultado-item { display:flex; align-items:center; gap:10px; padding:10px 12px;
+  cursor:pointer; transition:background .12s; border-bottom:1px solid #f1f5f9;
+  &:last-child { border-bottom:none; }
+  &:hover { background:#eff6ff; }
+  .nombre { font-size:13px; font-weight:600; color:#1e293b; }
+  .datos  { font-size:11px; color:#64748b; margin-top:1px; } }

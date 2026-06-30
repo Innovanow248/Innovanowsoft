@@ -1,0 +1,58 @@
+<div class="page-container">
+
+  <!-- Agregar nuevo cajero -->
+  <div class="add-panel">
+    <p class="panel-title">Agregar cajero</p>
+    <form [formGroup]="form" (ngSubmit)="agregar()" class="add-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Código (usuario del sistema)</mat-label>
+        <input matInput formControlName="cajero" maxlength="15" style="text-transform:uppercase" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre completo</mat-label>
+        <input matInput formControlName="descripcion" maxlength="50" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" style="width:120px">
+        <mat-label>Nivel</mat-label>
+        <input matInput type="number" formControlName="nivel" min="1" max="10" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving()">
+        @if (saving()) { <mat-spinner diameter="20" /> }
+        @else { <mat-icon>person_add</mat-icon> Agregar }
+      </button>
+    </form>
+    @if (msgOk()) { <div class="msg-ok">✓ {{ msgOk() }}</div> }
+    @if (msgErr()) { <div class="msg-err">{{ msgErr() }}</div> }
+  </div>
+
+  <!-- Listado -->
+  @if (loading()) {
+    <mat-spinner diameter="36" style="margin:32px auto;display:block" />
+  } @else {
+    <div class="cajeros-table">
+      <div class="table-header">
+        <span>Cajero</span>
+        <span>Nombre</span>
+        <span>Nivel</span>
+        <span style="text-align:center">Habilitado</span>
+      </div>
+      @for (c of cajeros(); track c.cajero) {
+        <div class="table-row" [class.disabled]="!c.habilitado">
+          <span class="code">{{ c.cajero }}</span>
+          <span class="desc">{{ c.descripcion || '—' }}</span>
+          <span class="nivel">{{ c.nivel }}</span>
+          <span class="toggle-cell">
+            @if (toggling().has(c.cajero)) {
+              <mat-spinner diameter="20" />
+            } @else {
+              <mat-slide-toggle
+                [checked]="c.habilitado"
+                color="primary"
+                (change)="toggleHabilitado(c)" />
+            }
+          </span>
+        </div>
+      }
+    </div>
+  }
+</div>
