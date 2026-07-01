@@ -25,6 +25,14 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
                 ISNULL(pb.MONTO_DEUDA_ACTUALIZADO,0)     AS MontoDeudaActualizado,
                 NULLIF(RTRIM(ISNULL(a.DESCRIPCION_INDIVIDUAL, ISNULL(a.MARCA_VEHICULO,''))), '') AS Descripcion,
                 NULLIF(RTRIM(ISNULL(ci.NOMBRE_FANTASIA,'')), '')                               AS NombreFantasia,
+                RTRIM(ci.CLASIFICACION)                                                        AS Clasificacion,
+                (SELECT TOP 1 LEFT(RTRIM(rl.CONCEPTO), 60)
+                 FROM BCK_RT_COMERCIO_RUBROS_ANO ra
+                 JOIN BCK_RT_COMERCIO_LIQUI_RUBROS rl ON RTRIM(rl.CODIGO_RUBRO) = RTRIM(ra.CODIGO_RUBRO)
+                 WHERE ra.ID_COMERCIO_INDUSTRIA = ci.ID_COMERCIO_INDUSTRIA
+                   AND ra.ANO_RUBROS = (SELECT MAX(ra2.ANO_RUBROS) FROM BCK_RT_COMERCIO_RUBROS_ANO ra2
+                                        WHERE ra2.ID_COMERCIO_INDUSTRIA = ci.ID_COMERCIO_INDUSTRIA)
+                 ORDER BY ra.PRINCIPAL DESC, ra.CODIGO_RUBRO)                                  AS Rubro,
                 CASE WHEN pb.ACTIVO = '0'
                      THEN COALESCE(pb.FECHA_BAJA, pb.LIQ_HASTA)
                      ELSE NULL END                           AS FechaBaja
@@ -762,5 +770,131 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
             ORDER BY pbv.CODIGO_VARIOS
             """, new { IdBien = idBien });
         return result.ToList();
+    }
+
+    // ── COMERCIO: detalle y sucursales ────────────────────────────────────
+
+    public async Task<ComercioDetalle?> ObtenerComercioDetalle(string idBien)
+    {
+        using var conn = db.Create();
+        return await conn.QueryFirstOrDefaultAsync<ComercioDetalle>("""
+            SELECT
+                RTRIM(ci.ID_COMERCIO_INDUSTRIA)              AS IdComercioIndustria,
+                RTRIM(ISNULL(ci.NOMBRE_FANTASIA,''))         AS NombreFantasia,
+                RTRIM(ISNULL(ci.NOMBRE_SOCIEDAD,''))         AS NombreSociedad,
+                RTRIM(ISNULL(ci.TIPO_SOCIEDAD,''))           AS TipoSociedad,
+                RTRIM(ISNULL(ci.CUIT,''))                    AS Cuit,
+                RTRIM(ISNULL(ci.INGRESOS_BRUTOS,''))         AS IngresosBrutos,
+                RTRIM(ISNULL(ci.CALLE_NOCOD,''))             AS Calle,
+                RTRIM(ISNULL(ci.NUMERACION_CALLE,''))        AS NumeracionCalle,
+                RTRIM(ISNULL(ci.BARRIO,''))                  AS Barrio,
+                RTRIM(ISNULL(ci.RESOLUCION_HABILITACION,'')) AS ResolucionHabilitacion,
+                ci.ALQUILER_DESDE                            AS AlquilerDesde,
+                ci.ALQUILER_HASTA                            AS AlquilerHasta,
+                RTRIM(ISNULL(ci.TELEFONO,''))                AS Telefono,
+                RTRIM(ISNULL(ci.TELEFONO_MOVIL,''))          AS TelefonoMovil,
+                RTRIM(ISNULL(ci.E_MAIL,''))                  AS Email,
+                RTRIM(ISNULL(ci.LEGAJO,''))                  AS Legajo,
+                RTRIM(ISNULL(ci.NRO_LICENCIA,''))            AS NroLicencia,
+                ci.CAPITAL_DECLARADO                         AS CapitalDeclarado,
+                ci.PERSONAL_OCUPADO                          AS PersonalOcupado
+            FROM RT_COMERCIO_INDUSTRIA ci
+            WHERE RTRIM(ci.ID_COMERCIO_INDUSTRIA) = @IdBien
+            """, new { IdBien = idBien });
+    }
+
+    public async Task<List<RubroComercio>> ObtenerRubrosComercio(string idBien)
+    {
+        using var conn = db.Create();
+        var result = await conn.QueryAsync<RubroComercio>("""
+            SELECT
+                RTRIM(ra.ANO_RUBROS)                     AS AnoRubros,
+                RTRIM(ra.CODIGO_RUBRO)                   AS CodigoRubro,
+                LEFT(RTRIM(ISNULL(rl.CONCEPTO,'')), 80)  AS Concepto,
+                RTRIM(ISNULL(ra.PRINCIPAL,'0'))          AS Principal,
+                ra.FECHA_ALTA                            AS FechaAlta,
+                ra.FECHA_CESE                            AS FechaCese
+            FROM BCK_RT_COMERCIO_RUBROS_ANO ra
+            LEFT JOIN BCK_RT_COMERCIO_LIQUI_RUBROS rl ON RTRIM(rl.CODIGO_RUBRO) = RTRIM(ra.CODIGO_RUBRO)
+            WHERE ra.ID_COMERCIO_INDUSTRIA = @IdBien
+              AND ra.ANO_RUBROS = (
+                  SELECT MAX(ra2.ANO_RUBROS)
+                  FROM BCK_RT_COMERCIO_RUBROS_ANO ra2
+                  WHERE ra2.ID_COMERCIO_INDUSTRIA = @IdBien)
+            ORDER BY ra.PRINCIPAL DESC, ra.CODIGO_RUBRO
+            """, new { IdBien = idBien });
+        return result.ToList();
+    }
+
+    public async Task<List<Sucursal>> ObtenerSucursales(string idBien)
+    {
+        using var conn = db.Create();
+        var result = await conn.QueryAsync<Sucursal>("""
+            SELECT
+                RTRIM(s.ID_COMERCIO_INDUSTRIA)           AS IdComercioIndustria,
+                RTRIM(s.NRO_SUCURSAL)                    AS NroSucursal,
+                RTRIM(ISNULL(s.NOMBRE_FANTASIA,''))      AS NombreFantasia,
+                RTRIM(ISNULL(s.CALLE_NOCOD,''))          AS Calle,
+                RTRIM(ISNULL(s.NUMERACION_CALLE,''))     AS NumeracionCalle,
+                RTRIM(ISNULL(s.BARRIO,''))               AS Barrio,
+                RTRIM(ISNULL(s.RESOLUCION_HABILITACION,'')) AS ResolucionHabilitacion,
+                s.FECHA_HABILITACION                     AS FechaHabilitacion,
+                s.FECHA_ALTA                             AS FechaAlta,
+                s.FECHA_BAJA                             AS FechaBaja,
+                RTRIM(ISNULL(s.OBSERVACIONES,''))        AS Observaciones,
+                RTRIM(ISNULL(s.OTRA_JURISDICCION,''))    AS OtraJurisdiccion
+            FROM RT_COMERCIO_SUCURSALES s
+            WHERE RTRIM(s.ID_COMERCIO_INDUSTRIA) = @IdBien
+            ORDER BY s.NRO_SUCURSAL
+            """, new { IdBien = idBien });
+        return result.ToList();
+    }
+
+    public async Task CrearSucursal(string idBien, AltaSucursalRequest req)
+    {
+        using var conn = db.Create();
+        var nroSucursal = await conn.ExecuteScalarAsync<int>("""
+            SELECT ISNULL(MAX(CAST(RTRIM(NRO_SUCURSAL) AS INT)), 0) + 1
+            FROM RT_COMERCIO_SUCURSALES
+            WHERE RTRIM(ID_COMERCIO_INDUSTRIA) = @IdBien
+            """, new { IdBien = idBien });
+
+        var nro = nroSucursal.ToString().PadLeft(2, '0');
+        await conn.ExecuteAsync("""
+            INSERT INTO RT_COMERCIO_SUCURSALES (
+                ID_COMERCIO_INDUSTRIA, NRO_SUCURSAL,
+                NOMBRE_FANTASIA, CALLE_NOCOD, NUMERACION_CALLE, BARRIO,
+                RESOLUCION_HABILITACION, FECHA_HABILITACION,
+                FECHA_ALTA, OBSERVACIONES, OTRA_JURISDICCION
+            ) VALUES (
+                @IdBien, @Nro,
+                @NombreFantasia, @Calle, @NumeracionCalle, @Barrio,
+                @ResolucionHabilitacion, @FechaHabilitacion,
+                GETDATE(), @Observaciones, @OtraJurisdiccion
+            )
+            """, new
+        {
+            IdBien                 = idBien.PadRight(15),
+            Nro                    = nro.PadRight(4),
+            NombreFantasia         = (req.NombreFantasia ?? "").PadRight(60),
+            Calle                  = (req.Calle ?? "").PadRight(40),
+            NumeracionCalle        = (req.NumeracionCalle ?? "").PadRight(10),
+            Barrio                 = (req.Barrio ?? "").PadRight(30),
+            ResolucionHabilitacion = (req.ResolucionHabilitacion ?? "").PadRight(20),
+            FechaHabilitacion      = req.FechaHabilitacion,
+            Observaciones          = (req.Observaciones ?? "").PadRight(200),
+            OtraJurisdiccion       = (req.OtraJurisdiccion ?? "").PadRight(4),
+        });
+    }
+
+    public async Task BajarSucursal(string idBien, string nroSucursal)
+    {
+        using var conn = db.Create();
+        await conn.ExecuteAsync("""
+            UPDATE RT_COMERCIO_SUCURSALES
+            SET FECHA_BAJA = GETDATE()
+            WHERE RTRIM(ID_COMERCIO_INDUSTRIA) = @IdBien
+              AND RTRIM(NRO_SUCURSAL) = @NroSucursal
+            """, new { IdBien = idBien, NroSucursal = nroSucursal });
     }
 }

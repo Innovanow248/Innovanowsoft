@@ -54,4 +54,11 @@ public interface ITributariaRepository
 
     // Inmueble — Detalle catastro
     Task<CatastroDetalle?> ObtenerCatastroDetalle(string idBien);
+
+    // Comercio — Detalle, rubros y sucursales
+    Task<ComercioDetalle?> ObtenerComercioDetalle(string idBien);
+    Task<List<RubroComercio>> ObtenerRubrosComercio(string idBien);
+    Task<List<Sucursal>> ObtenerSucursales(string idBien);
+    Task CrearSucursal(string idBien, AltaSucursalRequest req);
+    Task BajarSucursal(string idBien, string nroSucursal);
 }

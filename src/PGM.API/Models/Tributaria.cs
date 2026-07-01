@@ -16,6 +16,8 @@ public class BienPadron
     public decimal MontoDeudaActualizado { get; set; }
     public string? Descripcion           { get; set; }
     public string? NombreFantasia        { get; set; }
+    public string? Clasificacion         { get; set; }
+    public string? Rubro                 { get; set; }
     public DateTime? FechaBaja           { get; set; }
 }
 
@@ -264,4 +266,67 @@ public class ValuacionAutomotor
     public decimal BaseImponible   { get; set; }
     public decimal Alicuota        { get; set; }
     public string? MarcaVehiculo   { get; set; }
+}
+
+// ── COMERCIO: detalle y sucursales ────────────────────────────────────────
+
+public class ComercioDetalle
+{
+    public string   IdComercioIndustria   { get; set; } = "";
+    public string?  NombreFantasia        { get; set; }
+    public string?  NombreSociedad        { get; set; }
+    public string?  TipoSociedad          { get; set; }
+    public string?  Cuit                  { get; set; }
+    public string?  IngresosBrutos        { get; set; }
+    public string?  Calle                 { get; set; }
+    public string?  NumeracionCalle       { get; set; }
+    public string?  Barrio                { get; set; }
+    public string?  ResolucionHabilitacion { get; set; }
+    public DateTime? AlquilerDesde        { get; set; }
+    public DateTime? AlquilerHasta        { get; set; }
+    public string?  Telefono              { get; set; }
+    public string?  TelefonoMovil         { get; set; }
+    public string?  Email                 { get; set; }
+    public string?  Legajo                { get; set; }
+    public string?  NroLicencia           { get; set; }
+    public decimal? CapitalDeclarado      { get; set; }
+    public int?     PersonalOcupado       { get; set; }
+}
+
+public class RubroComercio
+{
+    public string   AnoRubros    { get; set; } = "";
+    public string   CodigoRubro  { get; set; } = "";
+    public string?  Concepto     { get; set; }
+    public string   Principal    { get; set; } = "0";
+    public DateTime? FechaAlta   { get; set; }
+    public DateTime? FechaCese   { get; set; }
+}
+
+public class Sucursal
+{
+    public string   IdComercioIndustria   { get; set; } = "";
+    public string   NroSucursal           { get; set; } = "";
+    public string?  NombreFantasia        { get; set; }
+    public string?  Calle                 { get; set; }
+    public string?  NumeracionCalle       { get; set; }
+    public string?  Barrio                { get; set; }
+    public string?  ResolucionHabilitacion { get; set; }
+    public DateTime? FechaHabilitacion    { get; set; }
+    public DateTime? FechaAlta            { get; set; }
+    public DateTime? FechaBaja            { get; set; }
+    public string?  Observaciones         { get; set; }
+    public string?  OtraJurisdiccion      { get; set; }
+}
+
+public class AltaSucursalRequest
+{
+    public string?  NombreFantasia        { get; set; }
+    public string?  Calle                 { get; set; }
+    public string?  NumeracionCalle       { get; set; }
+    public string?  Barrio                { get; set; }
+    public string?  ResolucionHabilitacion { get; set; }
+    public DateTime? FechaHabilitacion    { get; set; }
+    public string?  Observaciones         { get; set; }
+    public string?  OtraJurisdiccion      { get; set; }
 }

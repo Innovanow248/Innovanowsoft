@@ -25,7 +25,55 @@ export interface BienPadron {
   montoDeudaActualizado: number;
   descripcion: string | null;
   nombreFantasia: string | null;
+  clasificacion: string | null;
+  rubro: string | null;
   fechaBaja: string | null;
+}
+
+export interface ComercioDetalle {
+  idComercioIndustria: string;
+  nombreFantasia: string;
+  nombreSociedad: string;
+  tipoSociedad: string;
+  cuit: string;
+  ingresosBrutos: string;
+  calle: string;
+  numeracionCalle: string;
+  barrio: string;
+  resolucionHabilitacion: string;
+  alquilerDesde: string | null;
+  alquilerHasta: string | null;
+  telefono: string;
+  telefonoMovil: string;
+  email: string;
+  legajo: string;
+  nroLicencia: string;
+  capitalDeclarado: number | null;
+  personalOcupado: number | null;
+}
+
+export interface RubroComercio {
+  anoRubros: string;
+  codigoRubro: string;
+  concepto: string;
+  principal: string;
+  fechaAlta: string | null;
+  fechaCese: string | null;
+}
+
+export interface Sucursal {
+  idComercioIndustria: string;
+  nroSucursal: string;
+  nombreFantasia: string;
+  calle: string;
+  numeracionCalle: string;
+  barrio: string;
+  resolucionHabilitacion: string;
+  fechaHabilitacion: string | null;
+  fechaAlta: string | null;
+  fechaBaja: string | null;
+  observaciones: string;
+  otraJurisdiccion: string;
 }
 
 export interface DeudaResumen {
@@ -251,5 +299,26 @@ export class TributariaService {
 
   catastroDetalle(idBien: string) {
     return this.http.get<any>(`${this.base}/catastro/${idBien}/detalle`);
+  }
+
+  // ── COMERCIO ───────────────────────────────────────────────────────────
+  comercioDetalle(idBien: string) {
+    return this.http.get<ComercioDetalle>(`${this.base}/comercio/${idBien}/detalle`);
+  }
+
+  rubrosComercio(idBien: string) {
+    return this.http.get<RubroComercio[]>(`${this.base}/comercio/${idBien}/rubros`);
+  }
+
+  sucursales(idBien: string) {
+    return this.http.get<Sucursal[]>(`${this.base}/comercio/${idBien}/sucursales`);
+  }
+
+  crearSucursal(idBien: string, body: any) {
+    return this.http.post(`${this.base}/comercio/${idBien}/sucursales`, body);
+  }
+
+  bajarSucursal(idBien: string, nroSucursal: string) {
+    return this.http.delete(`${this.base}/comercio/${idBien}/sucursales/${nroSucursal}`);
   }
 }

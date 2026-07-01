@@ -297,4 +297,36 @@ public class TributariaController(
         if (result is null) return NotFound();
         return Ok(result);
     }
+
+    // ── COMERCIO: DETALLE Y SUCURSALES ──────────────────────────────────────
+
+    [HttpGet("comercio/{idBien}/detalle")]
+    public async Task<IActionResult> ObtenerComercioDetalle(string idBien)
+    {
+        var result = await tributariaRepo.ObtenerComercioDetalle(idBien);
+        if (result is null) return NotFound();
+        return Ok(result);
+    }
+
+    [HttpGet("comercio/{idBien}/rubros")]
+    public async Task<IActionResult> ObtenerRubrosComercio(string idBien)
+        => Ok(await tributariaRepo.ObtenerRubrosComercio(idBien));
+
+    [HttpGet("comercio/{idBien}/sucursales")]
+    public async Task<IActionResult> ObtenerSucursales(string idBien)
+        => Ok(await tributariaRepo.ObtenerSucursales(idBien));
+
+    [HttpPost("comercio/{idBien}/sucursales")]
+    public async Task<IActionResult> CrearSucursal(string idBien, [FromBody] AltaSucursalRequest req)
+    {
+        await tributariaRepo.CrearSucursal(idBien, req);
+        return Ok();
+    }
+
+    [HttpDelete("comercio/{idBien}/sucursales/{nroSucursal}")]
+    public async Task<IActionResult> BajarSucursal(string idBien, string nroSucursal)
+    {
+        await tributariaRepo.BajarSucursal(idBien, nroSucursal);
+        return NoContent();
+    }
 }

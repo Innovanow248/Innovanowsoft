@@ -19,6 +19,7 @@ import { CobroDialogComponent } from './cobro-dialog/cobro-dialog.component';
 import { CambioTitularDialogComponent } from './cambio-titular-dialog/cambio-titular-dialog.component';
 import { PortalWebDialogComponent } from './portal-web-dialog/portal-web-dialog.component';
 import { CatastroDetalleDialogComponent } from './catastro-detalle-dialog/catastro-detalle-dialog.component';
+import { ComercioDetalleDialogComponent } from './comercio-detalle-dialog/comercio-detalle-dialog.component';
 
 @Component({
   selector: 'app-contribuyentes',
@@ -82,7 +83,7 @@ export class ContribuyentesComponent {
   colsPersonas: string[] = ['identificador','nombre','cuitCuil','documento','localidad','accion'];
   get colsBienes(): string[] {
     const base = ['tipoBien','claveBien','activo','situacionDeuda','montoDeudaActualizado','fechaBaja','accion'];
-    if (this.tipoBienesFilter().includes('CICI')) base.splice(2, 0, 'nombreFantasia');
+    if (this.tipoBienesFilter().includes('CICI')) base.splice(2, 0, 'nombreFantasia', 'rubro');
     return base;
   }
   colsDeuda:    string[] = ['periodo','tipoBien','claveBien','capitalFacturado','deudaTotalActualizada','imp1Vence','accion'];
@@ -211,6 +212,17 @@ export class ContribuyentesComponent {
     this.dialog.open(CatastroDetalleDialogComponent, {
       data: { idBien: bien.idBien, claveBien: bien.claveBien },
       width: '900px', maxWidth: '98vw',
+    });
+  }
+
+  esComercio(b: BienPadron): boolean {
+    return b.tipoBien?.trim() === 'CICI';
+  }
+
+  abrirComercioDetalle(bien: BienPadron) {
+    this.dialog.open(ComercioDetalleDialogComponent, {
+      data: { idBien: bien.idBien, claveBien: bien.claveBien },
+      width: '1000px', maxWidth: '98vw',
     });
   }
 
