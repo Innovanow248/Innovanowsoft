@@ -22,7 +22,12 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
                 RTRIM(ISNULL(pb.TIPO_PLAN,'1 '))         AS TipoPlan,
                 RTRIM(ISNULL(pb.SITUACION_DEUDA,'RE'))   AS SituacionDeuda,
                 ISNULL(pb.MONTO_DEUDA_HISTORICO,0)       AS MontDeudaHistorico,
-                ISNULL(pb.MONTO_DEUDA_ACTUALIZADO,0)     AS MontoDeudaActualizado,
+                ISNULL((SELECT SUM(ISNULL(f.MONTO_DEUDA_ACTUALIZADO, 0))
+                         FROM RT_FACTURAS f
+                         WHERE RTRIM(f.ID_BIEN)   = RTRIM(pb.ID_BIEN)
+                           AND RTRIM(f.TIPO_BIEN) = RTRIM(pb.TIPO_BIEN)
+                           AND RTRIM(f.ESTADO_DEUDA)    = 'PT'
+                           AND ISNULL(f.MONTO_DEUDA_ACTUALIZADO, 0) > 0), 0) AS MontoDeudaActualizado,
                 NULLIF(RTRIM(ISNULL(a.DESCRIPCION_INDIVIDUAL, ISNULL(a.MARCA_VEHICULO,''))), '') AS Descripcion,
                 NULLIF(RTRIM(ISNULL(ci.NOMBRE_FANTASIA,'')), '')                               AS NombreFantasia,
                 RTRIM(ci.CLASIFICACION)                                                        AS Clasificacion,
@@ -57,12 +62,12 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
                 RTRIM(p.CUIT_CUIL)         AS CuitCuil,
                 RTRIM(pb.TIPO_BIEN)        AS TipoBien,
                 RTRIM(pb.CLAVE_BIEN)       AS ClaveBien,
-                RTRIM(pb.SITUACION_DEUDA)  AS SituacionDeuda,
+                ISNULL(RTRIM(f.SITUACION_DEUDA), 'DE') AS SituacionDeuda,
                 RTRIM(f.NRO_INTERNO)       AS NroInterno,
                 RTRIM(f.ANO_CUOTA) + '/' + RTRIM(f.NRO_CUOTA) AS Periodo,
                 RTRIM(f.ESTADO_DEUDA)      AS EstadoDeuda,
-                ISNULL(f.CAPITAL_FACTURADO, 0) AS CapitalFacturado,
-                ISNULL(f.MONTO_DEUDA_ACTUALIZADO, f.CAPITAL_FACTURADO) AS DeudaTotalActualizada,
+                ISNULL(f.MONTO_DEUDA_HISTORICO, 0) AS CapitalFacturado,
+                ISNULL(f.MONTO_DEUDA_ACTUALIZADO, 0) AS DeudaTotalActualizada,
                 0              AS Imp1Vence,
                 NULL           AS FechaVencimiento1,
                 0              AS Imp2Vence,
@@ -77,7 +82,7 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
                 AND RTRIM(f.TIPO_BIEN) = RTRIM(pb.TIPO_BIEN)
                 AND RTRIM(f.ESTADO_DEUDA) = 'PT'
             WHERE RTRIM(p.IDENTIFICADOR) = @Identificador
-              AND (ISNULL(f.CAPITAL_FACTURADO, 0) > 0 OR ISNULL(f.MONTO_DEUDA_ACTUALIZADO, 0) > 0)
+              AND ISNULL(f.MONTO_DEUDA_ACTUALIZADO, 0) > 0
             ORDER BY pb.TIPO_BIEN, f.ANO_CUOTA, f.NRO_CUOTA
             """, new { Identificador = identificador });
         return result.ToList();
@@ -88,13 +93,19 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
         using var conn = db.Create();
         var result = await conn.QueryAsync<DeudaResumen>("""
             SELECT
-                RTRIM(TIPO_BIEN)             AS TipoBien,
-                ISNULL(MONTO_DEUDA_HISTORICO,0)    AS MontoHistorico,
-                ISNULL(MONTO_DEUDA_ACTUALIZADO,0)  AS MontoActualizado,
-                FECHA_ACTUALIZACION_DEUDA          AS FechaActualizacion
-            FROM RT_DEUDA_PERSONA
-            WHERE RTRIM(IDENTIFICADOR) = @Identificador
-            ORDER BY TIPO_BIEN
+                RTRIM(f.TIPO_BIEN)                         AS TipoBien,
+                SUM(ISNULL(f.MONTO_DEUDA_HISTORICO, 0))    AS MontoHistorico,
+                SUM(ISNULL(f.MONTO_DEUDA_ACTUALIZADO, 0))  AS MontoActualizado,
+                NULL                                       AS FechaActualizacion
+            FROM RT_PADRON_BASE pb
+            JOIN RT_FACTURAS f
+                ON RTRIM(f.ID_BIEN)    = RTRIM(pb.ID_BIEN)
+               AND RTRIM(f.TIPO_BIEN) = RTRIM(pb.TIPO_BIEN)
+               AND RTRIM(f.ESTADO_DEUDA)    = 'PT'
+               AND ISNULL(f.MONTO_DEUDA_ACTUALIZADO, 0) > 0
+            WHERE RTRIM(pb.IDENTIFICADOR) = @Identificador
+            GROUP BY RTRIM(f.TIPO_BIEN)
+            ORDER BY RTRIM(f.TIPO_BIEN)
             """, new { Identificador = identificador });
         return result.ToList();
     }

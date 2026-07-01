@@ -255,6 +255,12 @@
             <th mat-header-cell *matHeaderCellDef>Clave</th>
             <td mat-cell *matCellDef="let d">{{ d.claveBien }}</td>
           </ng-container>
+          <ng-container matColumnDef="situacionDeuda">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let d">
+              <span [class]="situacionCuotaClass(d.situacionDeuda)">{{ situacionCuotaLabel(d.situacionDeuda) }}</span>
+            </td>
+          </ng-container>
           <ng-container matColumnDef="capitalFacturado">
             <th mat-header-cell *matHeaderCellDef>Capital</th>
             <td mat-cell *matCellDef="let d">{{ d.capitalFacturado | currency:'ARS':'symbol':'1.2-2' }}</td>

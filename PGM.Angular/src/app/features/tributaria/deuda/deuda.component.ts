@@ -36,7 +36,17 @@ export class DeudaComponent {
   resultados: Persona[] = [];   // lista cuando hay múltiples coincidencias
 
   colsResumen = ['tipoBien','montoHistorico','montoActualizado','fechaActualizacion'];
-  colsCuotas  = ['periodo','tipoBien','claveBien','capitalFacturado','deudaTotalActualizada','imp1Vence','fechaVencimiento1'];
+  colsCuotas  = ['periodo','tipoBien','claveBien','situacionDeuda','capitalFacturado','deudaTotalActualizada','imp1Vence','fechaVencimiento1'];
+
+  situacionLabel(s: string): string {
+    const map: Record<string,string> = { RE:'Rescindida', BL:'Bloqueada', JU:'Judicial', DE:'Normal' };
+    return map[s] ?? s;
+  }
+
+  situacionClass(s: string): string {
+    const map: Record<string,string> = { RE:'badge badge--muted', BL:'badge badge--warning', JU:'badge badge--danger', DE:'badge badge--success' };
+    return map[s] ?? 'badge badge--muted';
+  }
 
   buscar() {
     const val = this.form.value.busqueda?.trim() ?? '';

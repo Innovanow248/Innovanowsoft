@@ -75,9 +75,7 @@ export class ContribuyentesComponent {
   }
 
   get deudaFiltrada(): DeudaContribuyente[] {
-    const f = this.tipoBienesFilter();
-    if (!f.length) return this.detalleDeuda();
-    return this.detalleDeuda().filter(d => f.includes(d.tipoBien?.trim()));
+    return this.detalleDeuda();
   }
 
   colsPersonas: string[] = ['identificador','nombre','cuitCuil','documento','localidad','accion'];
@@ -86,7 +84,7 @@ export class ContribuyentesComponent {
     if (this.tipoBienesFilter().includes('CICI')) base.splice(2, 0, 'nombreFantasia', 'rubro');
     return base;
   }
-  colsDeuda:    string[] = ['periodo','tipoBien','claveBien','capitalFacturado','deudaTotalActualizada','imp1Vence','accion'];
+  colsDeuda:    string[] = ['periodo','tipoBien','claveBien','situacionDeuda','capitalFacturado','deudaTotalActualizada','imp1Vence','accion'];
   colsResumen:  string[] = ['tipoBien','montoHistorico','montoActualizado'];
 
   buscar() {
@@ -234,6 +232,16 @@ export class ContribuyentesComponent {
       data: { identificador: p.identificador, nombre: `${d?.persona?.apellido}, ${d?.persona?.nombre}` },
       width: '420px', maxWidth: '95vw',
     });
+  }
+
+  situacionCuotaLabel(s: string): string {
+    const m: Record<string,string> = { RE:'Rescindida', BL:'Bloqueada', JU:'Judicial', DE:'Normal' };
+    return m[s] ?? s;
+  }
+
+  situacionCuotaClass(s: string): string {
+    const m: Record<string,string> = { RE:'badge badge--muted', BL:'badge badge--warning', JU:'badge badge--danger', DE:'badge badge--success' };
+    return m[s] ?? 'badge badge--muted';
   }
 
   situacionClass(s: string): string {
