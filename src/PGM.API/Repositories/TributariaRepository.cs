@@ -77,6 +77,7 @@ public class TributariaRepository(DbConnectionFactory db) : ITributariaRepositor
                 AND RTRIM(f.TIPO_BIEN) = RTRIM(pb.TIPO_BIEN)
                 AND RTRIM(f.ESTADO_DEUDA) = 'PT'
             WHERE RTRIM(p.IDENTIFICADOR) = @Identificador
+              AND (ISNULL(f.CAPITAL_FACTURADO, 0) > 0 OR ISNULL(f.MONTO_DEUDA_ACTUALIZADO, 0) > 0)
             ORDER BY pb.TIPO_BIEN, f.ANO_CUOTA, f.NRO_CUOTA
             """, new { Identificador = identificador });
         return result.ToList();
